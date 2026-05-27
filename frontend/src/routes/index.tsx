@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from "../layouts/Mainlayout.tsx";
 import HomePage from "../pages/HomePage/HomePage.tsx";
+import RoomDetailPage from "../pages/RoomDetailPage/RoomDetailPage.tsx";
 
 
 
@@ -12,6 +13,9 @@ export default function AppRoutes() {
 
 
           <Route path="/" element={<HomePage />} />
+          <Route path="/room-detail" element={<RoomDetailPage />} />
+
+
       </Route>
 
 
