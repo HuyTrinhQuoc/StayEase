@@ -3,6 +3,7 @@ import MainLayout from "../layouts/Mainlayout.tsx";
 import HomePage from "../pages/HomePage/HomePage.tsx";
 import RoomDetailPage from "../pages/RoomDetailPage/RoomDetailPage.tsx";
 import PaymentPage from "../pages/PaymentPage/PaymentPay.tsx";
+import SuccessPage from "../pages/SuccessPage/SuccessPage.tsx";
 
 
 
@@ -16,6 +17,7 @@ export default function AppRoutes() {
           <Route path="/" element={<HomePage />} />
           <Route path="/room-detail" element={<RoomDetailPage />} />
           <Route path="/payment" element={<PaymentPage/>}/>
+          <Route path="/success" element={<SuccessPage />} />
 
 
       </Route>
