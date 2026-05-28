@@ -8,6 +8,7 @@ import HistoryPage from "../pages/HistoryPage/HistoryPage.tsx";
 import Dashboard from "../pages/AdminDashBoardPage/AdminDashBoardPage.tsx";
 import AdminLayout from "../layouts/AdminLayout.tsx";
 import AdminBookingPage from "../pages/AdminBookingPage/AdminBookingPage.tsx";
+import RoomMatrixPage from "../pages/AdminRoomMatrixPage/AdminRoomMatrixPage.tsx";
 
 
 
@@ -26,6 +27,7 @@ export default function AppRoutes() {
 <Route element={<AdminLayout/>}>
     <Route path="/admin-dashboard" element={<Dashboard />} />
     <Route path={"/admin-booking"} element={<AdminBookingPage/>} />
+    <Route path={"/admin-roommatrix"} element={<RoomMatrixPage/>} />
 
 
 
