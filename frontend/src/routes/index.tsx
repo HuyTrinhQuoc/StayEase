@@ -11,6 +11,8 @@ import AdminBookingPage from "../pages/AdminBookingPage/AdminBookingPage.tsx";
 import RoomMatrixPage from "../pages/AdminRoomMatrixPage/AdminRoomMatrixPage.tsx";
 import AdminRatesPage from "../pages/AdminRatesPage/AdminRatesPage.tsx";
 import LoginPage from "../pages/LoginPage/LoginPage.tsx";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.tsx";
+import RegisterPage from "../pages/RegisterPage/RegisterPage.tsx";
 
 
 export default function AppRoutes() {
@@ -34,6 +36,8 @@ export default function AppRoutes() {
             </Route>
 
             <Route path={"/login"} element={<LoginPage/>}/>
+            <Route path={"/reset-pass"} element={<ForgotPasswordPage/>}/>
+            <Route path={"/register"} element={<RegisterPage/>}/>
 
 
         </Routes>
