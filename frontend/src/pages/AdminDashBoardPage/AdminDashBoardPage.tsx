@@ -1,17 +1,6 @@
 // pages/DashboardPage.tsx
-
-import Sidebar from "../../components/SidebarAdmin/Sidebar.tsx";
-import HeaderAdmin from "../../components/Header/HeaderAdmin.tsx";
-
-
 const DashboardPage = () => {
     return (
-        <div className="bg-background text-on-surface font-body-md antialiased flex h-screen overflow-hidden">
-            <Sidebar />
-
-            <div className="flex-1 ml-64 flex flex-col h-screen overflow-hidden bg-background">
-                <HeaderAdmin />
-
                 <main className="flex-1 overflow-y-auto pt-24 px-8 pb-12 w-full">
                     {/* Title */}
                     <div className="mb-10">
@@ -217,8 +206,7 @@ const DashboardPage = () => {
                         </div>
                     </div>
                 </main>
-            </div>
-        </div>
+
     );
 };
 

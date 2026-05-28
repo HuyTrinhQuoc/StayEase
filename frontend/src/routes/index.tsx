@@ -6,6 +6,9 @@ import PaymentPage from "../pages/PaymentPage/PaymentPay.tsx";
 import SuccessPage from "../pages/SuccessPage/SuccessPage.tsx";
 import HistoryPage from "../pages/HistoryPage/HistoryPage.tsx";
 import Dashboard from "../pages/AdminDashBoardPage/AdminDashBoardPage.tsx";
+import AdminLayout from "../layouts/AdminLayout.tsx";
+import AdminBookingPage from "../pages/AdminBookingPage/AdminBookingPage.tsx";
+
 
 
 
@@ -20,8 +23,14 @@ export default function AppRoutes() {
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/history" element={<HistoryPage />} />
       </Route>
+<Route element={<AdminLayout/>}>
+    <Route path="/admin-dashboard" element={<Dashboard />} />
+    <Route path={"/admin-booking"} element={<AdminBookingPage/>} />
 
-        <Route path="/dashboard" element={<Dashboard />} />
+
+
+</Route>
+
 
     </Routes>
   );
