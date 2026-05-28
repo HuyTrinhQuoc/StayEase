@@ -1,4 +1,4 @@
-# 🎨 LensLeaseVN - Frontend Web Application
+# 🎨StayEase - Frontend Web Application
 
 Chào mừng bạn đến với mã nguồn Giao diện (Frontend) của dự án **LensLeaseVN** (Nền tảng cho thuê Máy ảnh & Ống kính).
 Giao diện được xây dựng tối ưu hóa trải nghiệm người dùng (UX) và hiệu năng cực cao bằng Vite và React.
