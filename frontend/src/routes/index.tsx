@@ -10,6 +10,7 @@ import AdminLayout from "../layouts/AdminLayout.tsx";
 import AdminBookingPage from "../pages/AdminBookingPage/AdminBookingPage.tsx";
 import RoomMatrixPage from "../pages/AdminRoomMatrixPage/AdminRoomMatrixPage.tsx";
 import AdminRatesPage from "../pages/AdminRatesPage/AdminRatesPage.tsx";
+import LoginPage from "../pages/LoginPage/LoginPage.tsx";
 
 
 export default function AppRoutes() {
@@ -30,9 +31,9 @@ export default function AppRoutes() {
                 <Route path={"/admin-booking"} element={<AdminBookingPage/>}/>
                 <Route path={"/admin-roommatrix"} element={<RoomMatrixPage/>}/>
                 <Route path={"/admin-rate"} element={<AdminRatesPage/>}/>
-
-
             </Route>
+
+            <Route path={"/login"} element={<LoginPage/>}/>
 
 
         </Routes>
