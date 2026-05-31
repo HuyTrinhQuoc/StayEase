@@ -29,6 +29,9 @@ public class User {
 
     private String passwordHash;
 
+    @Column(name = "is_verified")
+    private Boolean isVerified = false; // Mặc định là chưa xác thực
+
     @Column(length = 50)
     private String authProvider = "local";
 
