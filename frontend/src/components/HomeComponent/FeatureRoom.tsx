@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
 import RoomCard from './RoomCard';
-import { getRoomTypes } from '../../services/RoomServices.ts';
-import type { RoomType } from '../../type/Room';
+import { useRooms } from '../../hooks/useRooms'; // Import Hook
 
 const FeaturedRooms = () => {
-    const [rooms, setRooms] = useState<RoomType[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchRooms = async () => {
-            const data = await getRoomTypes();
-            setRooms(data);
-            setLoading(false);
-        };
-        fetchRooms();
-    }, []);
+    // Chỉ cần gọi hook ra để lấy data
+    const { rooms, loading, error } = useRooms();
 
     return (
         <section className="bg-[#f6f3f2] px-5 py-24 md:px-16">
@@ -24,9 +13,11 @@ const FeaturedRooms = () => {
                     <h2 className="mt-4 text-4xl font-semibold">Phòng nghỉ nổi bật</h2>
                 </div>
 
-                {loading ? (
-                    <div className="text-center text-gray-500">Đang tải dữ liệu phòng...</div>
-                ) : (
+                {/* Xử lý trạng thái loading / error rất nhàn */}
+                {loading && <div className="text-center text-gray-500">Đang tải dữ liệu phòng...</div>}
+                {error && <div className="text-center text-red-500">{error}</div>}
+
+                {!loading && !error && (
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                         {rooms.map((room) => (
                             <RoomCard key={room.id} room={room} />

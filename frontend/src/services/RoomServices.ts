@@ -12,3 +12,14 @@ export const getRoomTypes = async (): Promise<RoomType[]> => {
         return [];
     }
 };
+
+
+export const getRoomTypeById = async (id: string | number): Promise<RoomType | null> => {
+    try {
+        const response = await axios.get(`${API_URL}/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy chi tiết phòng:", error);
+        return null;
+    }
+};
