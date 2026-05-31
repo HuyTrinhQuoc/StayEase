@@ -1,11 +1,11 @@
 package project.backend.entities;
 
-
-
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "room_types")
@@ -35,14 +35,15 @@ public class RoomType {
     @Column(name = "base_price_per_night", nullable = false, precision = 12, scale = 2)
     private BigDecimal basePricePerNight;
 
-    // Lưu chuỗi định dạng JSON từ DB (ví dụ: ["Wifi", "Tv"])
     @Column(columnDefinition = "jsonb")
     private String amenities;
 
-    // Lưu chuỗi định dạng JSON link ảnh (ví dụ: ["url1.jpg", "url2.jpg"])
-    @Column(columnDefinition = "jsonb")
-    private String images;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // [CẬP NHẬT MỚI]: Kết nối với bảng ảnh, tự động sắp xếp theo thứ tự sort_order
+    @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("sortOrder ASC") // Luôn trả về ảnh xếp đúng thứ tự admin mong muốn
+    @Builder.Default
+    private List<RoomImage> images = new ArrayList<>();
 }
