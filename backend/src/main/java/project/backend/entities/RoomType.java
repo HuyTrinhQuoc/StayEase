@@ -47,3 +47,42 @@ public class RoomType {
     @Builder.Default
     private List<RoomImage> images = new ArrayList<>();
 }
+
+
+
+/*
+
+
+@Entity
+@Table(name = "room_types")
+@Data
+public class RoomType {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(nullable = false)
+    private Integer maxOccupancy;
+
+    @Column(length = 50)
+    private String bedType;
+
+    @Column(nullable = false)
+    private BigDecimal basePricePerNight;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<String> amenities;
+
+    // Mapping 1-N với RoomImages
+    @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<RoomImage> images;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+}*/

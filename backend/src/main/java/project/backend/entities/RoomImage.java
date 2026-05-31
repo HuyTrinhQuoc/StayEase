@@ -40,3 +40,35 @@ public class RoomImage {
     @JsonIgnore // Chống vòng lặp vô hạn khi convert sang JSON
     private RoomType roomType;
 }
+
+
+/*
+package com.hotel.booking.entity;
+
+import jakarta.persistence.*;
+        import lombok.Data;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "room_images")
+@Data
+public class RoomImage {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_type_id", nullable = false)
+    private RoomType roomType;
+
+    @Column(nullable = false)
+    private String url;
+
+    private String altText;
+
+    private Short sortOrder;
+
+    private Boolean isPrimary = false;
+
+    private LocalDateTime uploadedAt = LocalDateTime.now();
+}*/
