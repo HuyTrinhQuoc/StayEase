@@ -21,7 +21,7 @@ export default function AppRoutes() {
             {/* chứa header footer chung của user */}
             <Route element={<MainLayout/>}>
                 <Route path="/" element={<HomePage/>}/>
-                <Route path="/room-detail" element={<RoomDetailPage/>}/>
+                <Route path="/room-detail/:id" element={<RoomDetailPage/>}/>
                 <Route path="/payment" element={<PaymentPage/>}/>
                 <Route path="/success" element={<SuccessPage/>}/>
                 <Route path="/history" element={<HistoryPage/>}/>
