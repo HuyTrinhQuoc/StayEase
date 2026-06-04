@@ -1,25 +1,33 @@
-import type { PaymentFormData } from '../type/booking';
+import type {BookingRequestPayload} from '../type/booking';
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:8080/api/bookings';
+const API_URL = 'http://localhost:8080/api/bookings';
 
 export const bookingService = {
-    submitPayment: async (bookingData: Partial<PaymentFormData> & { roomId: string | number; totalPrice: number; checkIn: string; checkOut: string }) => {
-        const response = await fetch(`${API_BASE_URL}/confirm`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(bookingData),
-        });
+// Cập nhật lại tham số payload cho hàm submitPayment
+    submitPayment: async (payload: BookingRequestPayload) => {
+        try {
+            const response = await axios.post(`${API_URL}/payment`, payload);
+            return response.data;
+        } catch (error: any) {
+            // XỬ LÝ LẠI ĐOẠN BẮT LỖI NÀY
+            if (error.response && error.response.data) {
+                const errorData = error.response.data;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Không thể xử lý giao dịch đặt phòng.');
+                // Nếu Backend trả về object (thường là mặc định của Spring Boot)
+                if (typeof errorData === 'object') {
+                    // Lấy trường message, nếu không có thì convert nguyên cục Object thành String để đọc
+                    const errorMessage = errorData.message || JSON.stringify(errorData);
+                    throw new Error(errorMessage);
+                }
+
+                // Nếu Backend trả về string thuần
+                throw new Error(errorData);
+            }
+
+            throw new Error('Lỗi kết nối đến máy chủ.');
         }
-
-        return await response.json();
     },
-
     applyDiscount: async (code: string, originalPrice: number): Promise<number> => {
         // Mô phỏng gọi API kiểm tra mã giảm giá
         if (code.toUpperCase() === 'WELCOME2026') {

@@ -43,6 +43,7 @@ const RoomDetailPage = () => {
                 <button className="bg-black text-white px-6 py-3 uppercase tracking-widest text-sm">
                     Đặt ngay
                 </button>
+
             </div>
         </main>
     );

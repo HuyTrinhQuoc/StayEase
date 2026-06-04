@@ -13,6 +13,7 @@ import AdminRatesPage from "../pages/AdminRatesPage/AdminRatesPage.tsx";
 import LoginPage from "../pages/LoginPage/LoginPage.tsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.tsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.tsx";
+import CartPage from "../pages/CartPage/CartPage.tsx";
 
 
 export default function AppRoutes() {
@@ -22,6 +23,7 @@ export default function AppRoutes() {
             <Route element={<MainLayout/>}>
                 <Route path="/" element={<HomePage/>}/>
                 <Route path="/room-detail/:id" element={<RoomDetailPage/>}/>
+                <Route path="/cart" element={<CartPage/>}/>
                 <Route path="/payment" element={<PaymentPage/>}/>
                 <Route path="/success" element={<SuccessPage/>}/>
                 <Route path="/history" element={<HistoryPage/>}/>

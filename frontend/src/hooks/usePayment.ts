@@ -1,24 +1,41 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type{ BookingLocationState, PaymentFormData } from '../type/booking';
-import {bookingService} from "../services/bookingServices.ts";
+import type { PaymentFormData } from '../type/booking';
+import { bookingService } from "../services/bookingServices.ts";
 
+export interface CheckoutItem {
+    roomTypeId: number;
+    roomName: string;
+    checkIn: string;
+    checkOut: string;
+    quantity: number;
+    pricePerNight: number;
+}
 
 export const usePayment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Hứng thông tin phòng & ngày giờ đã chọn từ trang chi tiết trước đó
-    const bookingDetails = location.state as BookingLocationState || {
-        roomId: 0,
-        checkIn: '2026-11-15T14:00',
-        checkOut: '2026-11-17T12:00',
-        price: 5000000
-    };
+    // 1. Receive the list of rooms (always an array)
+    const checkoutItems: CheckoutItem[] = useMemo(() => {
+        return location.state?.checkoutItems || [];
+    }, [location.state]);
 
-    // Khởi tạo các chi phí mặc định
-    const vatFee = 400000;
-    const serviceFee = 250000;
+    // 2. Automatically calculate Base Price (sum of all rooms)
+    const basePrice = useMemo(() => {
+        return checkoutItems.reduce((acc, item) => {
+            const dateIn = new Date(item.checkIn);
+            const dateOut = new Date(item.checkOut);
+            // Calculate nights, ensuring at least 1 night
+            const nights = Math.max(1, Math.ceil((dateOut.getTime() - dateIn.getTime()) / (1000 * 60 * 60 * 24)));
+            return acc + (item.pricePerNight * nights * item.quantity);
+        }, 0);
+    }, [checkoutItems]);
+
+    // Calculate dynamic fees based on the total base price [cite: 65, 69]
+    const vatFee = useMemo(() => basePrice * 0.08, [basePrice]);
+    const serviceFee = useMemo(() => basePrice * 0.05, [basePrice]);
+
     const [discount, setDiscount] = useState(0);
     const [promoError, setPromoError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +56,7 @@ export const usePayment = () => {
         agreedToTerms: false
     });
 
-    const totalPrice = bookingDetails.price + vatFee + serviceFee - discount;
+    const totalPrice = basePrice + vatFee + serviceFee - discount;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -58,7 +75,7 @@ export const usePayment = () => {
     const handleApplyPromo = async () => {
         setPromoError('');
         try {
-            const discountAmount = await bookingService.applyDiscount(form.promoCode, bookingDetails.price);
+            const discountAmount = await bookingService.applyDiscount(form.promoCode, basePrice);
             setDiscount(discountAmount);
         } catch (err: any) {
             setPromoError(err.message);
@@ -78,16 +95,34 @@ export const usePayment = () => {
 
         setIsLoading(true);
         try {
+            // Prepare payload containing the LIST OF ROOMS for the Backend
             const payload = {
-                ...form,
-                roomId: bookingDetails.roomId,
-                checkIn: bookingDetails.checkIn,
-                checkOut: bookingDetails.checkOut,
-                totalPrice
+                customerName: form.customerName,
+                phone: form.phone,
+                email: form.email,
+                nationality: form.nationality,
+                specialRequests: `Giờ dự kiến: ${form.checkInTimeWindow}. Ghi chú: ${form.note}`,
+                paymentMethod: form.paymentMethod,
+                promoCode: form.promoCode,
+
+                // Map the items to the structure expected by the backend DTO
+                rooms: checkoutItems.map(item => ({
+                    roomTypeId: item.roomTypeId,
+                    checkIn: item.checkIn.split('T')[0], // Extract YYYY-MM-DD
+                    checkOut: item.checkOut.split('T')[0],
+                    quantity: item.quantity
+                }))
             };
+
             await bookingService.submitPayment(payload);
+
+            // If checking out from the cart, clear the local cart data
+            if (location.state?.isFromCart) {
+                localStorage.removeItem('hotel_cart');
+            }
+
             alert('Đặt phòng thành công!');
-            navigate('/completed');
+            navigate('/success');
         } catch (err: any) {
             alert(err.message || 'Giao dịch thất bại, vui lòng thử lại.');
         } finally {
@@ -96,7 +131,7 @@ export const usePayment = () => {
     };
 
     return {
-        bookingDetails,
+        checkoutItems,
         form,
         vatFee,
         serviceFee,

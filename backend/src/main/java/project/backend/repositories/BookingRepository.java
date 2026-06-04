@@ -1,4 +1,7 @@
 package project.backend.repositories;
 
-public interface BookingRepository {
+import org.springframework.data.jpa.repository.JpaRepository;
+import project.backend.entities.Booking;
+
+public interface BookingRepository extends JpaRepository<Booking, Integer> {
 }
