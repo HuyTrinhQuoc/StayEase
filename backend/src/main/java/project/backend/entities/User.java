@@ -6,6 +6,8 @@ package project.backend.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import project.backend.eNum.UserRole;
 
 import java.time.LocalDateTime;
@@ -43,6 +45,7 @@ public class User {
     private String providerId;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(columnDefinition = "user_role")
     @Builder.Default
     private UserRole role = UserRole.guest;

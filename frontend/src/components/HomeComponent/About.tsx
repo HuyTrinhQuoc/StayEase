@@ -9,10 +9,10 @@ const About = () => {
                 />
             </div>
             <div className="flex flex-col gap-6">
-                <span className="uppercase tracking-[4px] text-yellow-700">Về L'Héritage Luxury</span>
+                <span className="uppercase tracking-[4px] text-yellow-700">Về Stay Ease</span>
                 <h2 className="text-4xl font-semibold">Kiến trúc tân cổ điển & Triết lý phục vụ tận tâm</h2>
                 <p className="text-lg leading-8 text-gray-600">
-                    Nép mình bên bờ biển thanh bình, L'Héritage Luxury là bản giao hưởng hoàn hảo giữa nét đẹp di sản kiến trúc tân cổ điển và tiện nghi xa hoa hiện đại.
+                    Nép mình bên bờ biển thanh bình, Stay Ease là bản giao hưởng hoàn hảo giữa nét đẹp di sản kiến trúc tân cổ điển và tiện nghi xa hoa hiện đại.
                 </p>
                 <button className="w-fit rounded border border-yellow-700 px-6 py-3 text-yellow-700 transition hover:bg-yellow-700 hover:text-white">
                     Tìm hiểu thêm
