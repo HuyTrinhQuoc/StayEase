@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import project.backend.entities.Room;
 import project.backend.entities.RoomType;
 import project.backend.repositories.RoomTypeRepository;
 
@@ -31,7 +32,7 @@ public class RoomTypeController {
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<RoomType> getRoomTypeById(@PathVariable Integer id) {
-        return roomTypeRepository.findById(id)
+        return roomTypeRepository.findById(Math.toIntExact(Long.valueOf(id)))
                 .map(rt -> {
                     rt.getImages().size(); // Khởi tạo dữ liệu ảnh liên kết
                     return ResponseEntity.ok(rt);
