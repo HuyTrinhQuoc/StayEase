@@ -1,8 +1,5 @@
 package project.backend.services;
 
-
-
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +11,8 @@ import project.backend.repositories.BookingRepository;
 import project.backend.repositories.RoomRepository;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +24,7 @@ public class BookingService {
     @Transactional
     public Booking processBooking(BookingRequestDTO dto) {
         // 1. Kiểm tra phòng có tồn tại không
-        Room room = roomRepository.findById(dto.getRoomId())
+        Room room = roomRepository.findById(dto.getRoomId().intValue())
                 .orElseThrow(() -> new IllegalArgumentException("Phòng không tồn tại!"));
 
         // 2. Kiểm tra logic ngày giờ một lần nữa ở Backend (Bảo mật tầng sâu)
@@ -35,12 +32,11 @@ public class BookingService {
             throw new IllegalArgumentException("Thời gian nhận phòng phải trước thời gian trả phòng.");
         }
 
-        // 3. Tính số đêm thực tế (Dựa trên chênh lệch giờ)
-        long hours = Duration.between(dto.getCheckIn(), dto.getCheckOut()).toHours();
-        long nights = Math.max(1, (long) Math.ceil(hours / 24.0));
+        // 3. Tính số đêm thực tế (Dựa trên chênh lệch ngày)
+        long nights = Math.max(1, ChronoUnit.DAYS.between(dto.getCheckIn(), dto.getCheckOut()));
 
         // 4. Tự tính toán tiền dựa trên giá gốc từ Database
-        BigDecimal roomPricePerNight = room.getBasePricePerNight(); // Giả sử bảng Room có trường này
+        BigDecimal roomPricePerNight = room.getBasePricePerNight(); // Lấy từ bảng Room
         BigDecimal totalRoomPrice = roomPricePerNight.multiply(BigDecimal.valueOf(nights));
 
         BigDecimal vat = BigDecimal.valueOf(400000); // Hoặc tính bằng % tùy bạn
@@ -48,7 +44,7 @@ public class BookingService {
         BigDecimal discount = BigDecimal.ZERO;
 
         // Kiểm tra mã giảm giá gốc từ DB nếu có
-        if ("WELCOME2026".equalsIgnoreCase(dto.getPromoCode())) {
+        if (dto.getPromoCode() != null && "WELCOME2026".equalsIgnoreCase(dto.getPromoCode())) {
             discount = BigDecimal.valueOf(200000);
         }
 
@@ -67,7 +63,7 @@ public class BookingService {
         booking.setNote(dto.getNote());
         booking.setPaymentMethod(dto.getPaymentMethod());
         booking.setTotalPrice(finalTotal);
-        booking.setStatus(BookingStatus.PENDING); // Đặt trạng thái chờ
+        booking.setStatus(BookingStatus.pending); // Đặt trạng thái chờ (chữ thường)
         booking.setCreatedAt(LocalDateTime.now());
 
         return bookingRepository.save(booking);

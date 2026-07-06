@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* Tailwind CSS v4 */
+/* Định biên Tailwind v4 chuẩn */
 @import "tailwindcss";
 
 /* =========================
-   THEME TOKENS
+   THEME TOKENS (Tailwind v4)
 ========================= */
 @theme {
   /* Fonts */
@@ -131,45 +131,41 @@
 }
 
 /* =========================
-   BASE
+   BASE STYLES (Cú pháp v4)
 ========================= */
-@layer base {
-  body {
-    font-family: var(--font-body);
-    background: var(--color-background);
-    color: var(--color-on-surface);
-  }
+body {
+  font-family: var(--font-body);
+  background: var(--color-background);
+  color: var(--color-on-surface);
+}
 
-  .material-symbols-outlined {
-    font-variation-settings:
-            "FILL" 0,
-            "wght" 300,
-            "GRAD" 0,
-            "opsz" 24;
-  }
+.material-symbols-outlined {
+  font-variation-settings:
+          "FILL" 0,
+          "wght" 300,
+          "GRAD" 0,
+          "opsz" 24;
 }
 
 /* =========================
-   UTILITIES
+   CUSTOM UTILITIES (Cú pháp v4)
 ========================= */
-@layer utilities {
-  .font-display {
-    font-family: var(--font-display);
-  }
+@utility font-display {
+  font-family: var(--font-display);
+}
 
-  .font-body {
-    font-family: var(--font-body);
-  }
+@utility font-body {
+  font-family: var(--font-body);
+}
 
-  .input-glass {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-  }
+@utility input-glass {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+}
 
-  .card-luxury {
-    background: var(--color-surface);
-    border: 1px solid var(--color-outline-variant);
-    border-radius: var(--radius-md);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
+@utility card-luxury {
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }

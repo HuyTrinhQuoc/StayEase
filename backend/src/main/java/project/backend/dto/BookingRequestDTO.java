@@ -2,7 +2,7 @@ package project.backend.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 public class BookingRequestDTO {
@@ -19,8 +19,8 @@ public class BookingRequestDTO {
     private String email;
 
     private String nationality;
-    private LocalDateTime checkIn;
-    private LocalDateTime checkOut;
+    private LocalDate checkIn;
+    private LocalDate checkOut;
     private String checkInTimeWindow;
     private String note;
     private String paymentMethod;

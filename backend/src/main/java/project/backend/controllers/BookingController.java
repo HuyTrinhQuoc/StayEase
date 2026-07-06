@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.backend.dto.BookingRequestDTO;
 import project.backend.entities.Booking;
+import project.backend.services.BookingService;
 
 @RestController
 @RequestMapping("/api/bookings")

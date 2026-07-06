@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import project.backend.eNum.RoomStatus;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "rooms")
@@ -23,6 +24,9 @@ public class Room {
 
     @Column(nullable = false)
     private Integer floor;
+
+    @Column(nullable = false)
+    private BigDecimal basePricePerNight;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)

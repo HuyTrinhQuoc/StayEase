@@ -1,8 +1,5 @@
 package project.backend.entities;
 
-
-
-
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -65,4 +62,23 @@ public class Booking {
     private String specialRequests;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Các trường mới để lưu thông tin khách hàng
+    @Column(nullable = false)
+    private String customerName;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String email;
+
+    private String nationality;
+
+    private String checkInTimeWindow;
+
+    @Column(columnDefinition = "TEXT")
+    private String note;
+
+    private String paymentMethod;
 }
