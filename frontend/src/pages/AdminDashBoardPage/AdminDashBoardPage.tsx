@@ -1,23 +1,35 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AdminDashboardPage = () => {
+    const navigate = useNavigate();
     const [revenueData, setRevenueData] = useState<any[]>([]);
     const [selectedYear, setSelectedYear] = useState<number>(2026);
     const [loading, setLoading] = useState<boolean>(false);
 
+    // State quản lý toàn bộ dữ liệu động thay thế cho dữ liệu cứng ban đầu
+    const [dashboardStats, setDashboardStats] = useState<any>({
+        occupancyRate: 0,
+        todayRevenue: 0,
+        todayCheckIns: 0,
+        todayCheckOuts: 0,
+        roomTypePerformance: [],
+        urgentNotifications: [],
+        miniRoomMatrix: []
+    });
+
     useEffect(() => {
-        const fetchRevenue = async () => {
+        const fetchDashboardData = async () => {
             setLoading(true);
             try {
-                // Gọi thẳng tới API Spring Boot (Cổng 8080) không qua instance trung gian
-                const response = await axios.get(`http://localhost:8080/api/admin/dashboard/revenue`, {
+                // 1. Gọi API lấy Doanh thu theo năm
+                const revResponse = await axios.get(`http://localhost:8080/api/admin/dashboard/revenue`, {
                     params: { year: selectedYear }
                 });
 
-                const data = response.data;
-
+                const data = revResponse.data;
                 if (data && Array.isArray(data)) {
                     const fullYearData = Array.from({ length: 12 }, (_, i) => {
                         const monthNum = i + 1;
@@ -31,9 +43,16 @@ const AdminDashboardPage = () => {
                 } else {
                     setDefaultData();
                 }
+
+                // 2. Gọi API lấy dữ liệu tổng quan cho Metrics, Hạng phòng, Thông báo & Sơ đồ phòng
+                const statsResponse = await axios.get(`http://localhost:8080/api/admin/dashboard/overview`);
+                if (statsResponse.data) {
+                    setDashboardStats(statsResponse.data);
+                }
+
             } catch (error) {
                 console.error("Lỗi kết nối API:", error);
-                setDefaultData(); // Khi API lỗi (hoặc chưa bật backend), vẫn hiện biểu đồ cột bằng 0 để giữ giao diện
+                setDefaultData();
             } finally {
                 setLoading(false);
             }
@@ -47,7 +66,7 @@ const AdminDashboardPage = () => {
             setRevenueData(emptyData);
         };
 
-        fetchRevenue();
+        fetchDashboardData();
     }, [selectedYear]);
 
     return (
@@ -74,13 +93,13 @@ const AdminDashboardPage = () => {
                 </select>
             </div>
 
-            {/* Metrics */}
+            {/* Metrics - Đã map dữ liệu thực tế từ API */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[
-                    { title: "Tỷ lệ lấp đầy", value: "78%", icon: "📊", desc: "+5% so với tuần trước" },
-                    { title: "Doanh thu trong ngày", value: "45.500.000đ", icon: "💰", desc: "Đạt 92% mục tiêu" },
-                    { title: "Check-in hôm nay", value: "12", icon: "🔑", desc: "4 phòng VIP" },
-                    { title: "Check-out hôm nay", value: "8", icon: "🚪", desc: "Đã hoàn tất: 6" },
+                    { title: "Tỷ lệ lấp đầy", value: `${dashboardStats.occupancyRate}%`, icon: "📊", desc: "Xem chi tiết chiến lược giá" },
+                    { title: "Doanh thu trong ngày", value: `${Number(dashboardStats.todayRevenue).toLocaleString()}đ`, icon: "💰", desc: "Quản lý danh sách hóa đơn" },
+                    { title: "Check-in hôm nay", value: `${dashboardStats.todayCheckIns}`, icon: "🔑", desc: "Xử lý nhận phòng nhanh" },
+                    { title: "Check-out hôm nay", value: `${dashboardStats.todayCheckOuts}`, icon: "🚪", desc: "Xử lý trả phòng khách sạn" },
                 ].map((item) => (
                     <div key={item.title} className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
                         <div className="flex justify-between items-start mb-4">
@@ -115,54 +134,75 @@ const AdminDashboardPage = () => {
                     </div>
                 </div>
 
-                {/* Bar Chart Hiệu suất hạng phòng */}
+                {/* Bar Chart Hiệu suất hạng phòng - Đã đổi thành dữ liệu động từ DB */}
                 <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-700 mb-6">
                         Hiệu suất hạng phòng
                     </h3>
                     <div className="h-48 flex items-end justify-between gap-4">
-                        {[80, 60, 40, 90].map((height, index) => (
-                            <div key={index} className="w-1/4 bg-indigo-100 rounded-t-md" style={{ height: `${height}%` }} />
+                        {dashboardStats.roomTypePerformance.map((item: any, index: number) => (
+                            <div
+                                key={index}
+                                className="w-1/4 bg-indigo-100 rounded-t-md relative group transition-all hover:bg-indigo-200"
+                                style={{ height: `${item.percentage}%` }}
+                            >
+                                <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                    {item.percentage}%
+                                </div>
+                            </div>
                         ))}
                     </div>
                     <div className="flex justify-between mt-3 text-xs text-gray-400">
-                        <span>Standard</span>
-                        <span>Deluxe</span>
-                        <span>Suite</span>
-                        <span>Presidential</span>
+                        {dashboardStats.roomTypePerformance.map((item: any, index: number) => (
+                            <span key={index}>{item.typeName}</span>
+                        ))}
                     </div>
                 </div>
             </div>
 
             {/* Bottom (Notifications & Room Matrix) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Thông báo khẩn cấp - Đã đổi thành dữ liệu động từ DB */}
                 <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-700 mb-6">Thông báo khẩn cấp</h3>
                     <div className="space-y-4">
-                        {[
-                            { icon: "🚗", text: "Khách phòng 402 yêu cầu xe ra sân bay." },
-                            { icon: "🧹", text: "Yêu cầu dọn phòng 305 gấp." },
-                            { icon: "🍴", text: "Đặt bàn nhà hàng - Bàn 12." },
-                        ].map((item, index) => (
-                            <div key={index} className="flex gap-4 p-3 border border-gray-100 rounded-lg items-center">
-                                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
-                                    {item.icon}
+                        {dashboardStats.urgentNotifications.length > 0 ? (
+                            dashboardStats.urgentNotifications.map((item: any, index: number) => (
+                                <div key={index} className="flex gap-4 p-3 border border-gray-100 rounded-lg items-center">
+                                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-sm">
+                                        🔔
+                                    </div>
+                                    <p className="text-sm text-gray-600">{item.message}</p>
                                 </div>
-                                <p className="text-sm text-gray-600">{item.text}</p>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-sm text-gray-400 text-center py-10">Hiện không có thông báo khẩn cấp nào.</p>
+                        )}
                     </div>
                 </div>
 
+                {/* Sơ đồ phòng rút gọn - Đã thêm liên kết chuyển trang và đổi sang dữ liệu động từ DB */}
                 <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-semibold text-gray-700">Sơ đồ phòng rút gọn</h3>
-                        <span className="text-xs text-indigo-500 cursor-pointer hover:underline">Mở rộng</span>
+                        <span
+                            onClick={() => navigate("/admin/room-matrix")}
+                            className="text-xs text-indigo-500 cursor-pointer hover:underline font-medium"
+                        >
+                            Mở rộng
+                        </span>
                     </div>
                     <div className="grid grid-cols-6 gap-2">
-                        {["101", "102", "103", "104", "105", "106", "201", "202", "203", "204", "205", "206"].map((room) => (
-                            <div key={room} className="aspect-square border border-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer">
-                                {room}
+                        {dashboardStats.miniRoomMatrix.map((room: any) => (
+                            <div
+                                key={room.roomNumber}
+                                onClick={() => navigate("/admin/room-matrix")}
+                                className={`aspect-square border rounded-md flex items-center justify-center text-xs font-medium transition-colors cursor-pointer
+                                    ${room.status === 'available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' :
+                                    room.status === 'occupied' ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' :
+                                        'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'}`}
+                            >
+                                {room.roomNumber}
                             </div>
                         ))}
                     </div>
