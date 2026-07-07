@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {useRegister} from "../../hooks/useAuth.ts";
-import InputField from "../../components/LoginComponent/InputField.tsx";
 import type {RegisterData} from "../../type/auth.ts";
+import InputField from "../../components/LoginComponent/InputField.tsx";
 
 
 const RegisterPage: React.FC = () => {
+    const { register, loading, error } = useRegister();
+    const navigate = useNavigate();
 
-    const { register, loading, error, successMessage } = useRegister();
-
-    // Mở rộng thêm confirmPassword (chỉ cần ở local state của component này)
     const [formData, setFormData] = useState<RegisterData & { confirmPassword?: string }>({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: ''
-    });
+        name: '', email: '', phone: '', password: '', confirmPassword: ''
+});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,10 +26,12 @@ const RegisterPage: React.FC = () => {
         try {
             await register({
                 name: formData.name,
-                email: formData.email,
+                email: formData.email.trim(), // Trim bớt dấu cách thừa
                 phone: formData.phone,
                 password: formData.password
             });
+            alert("Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác nhận tài khoản.");
+            navigate('/login'); // Chuyển hướng sang Login
         } catch (err) {
             console.error(err);
         }
@@ -54,7 +52,6 @@ const RegisterPage: React.FC = () => {
                     </div>
 
                     {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-                    {successMessage && <div className="text-green-600 text-sm mb-4">{successMessage}</div>}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <InputField label="Họ và tên" icon="person" name="name" placeholder="Nguyễn Văn A" value={formData.name} onChange={handleChange} />
@@ -67,6 +64,15 @@ const RegisterPage: React.FC = () => {
                             {loading ? "Đang xử lý..." : "Tạo tài khoản"}
                         </button>
                     </form>
+
+                    {/* Footer: Link quay lại đăng nhập */}
+                    <div className="mt-8 text-center border-t border-outline-variant/30 pt-6">
+                        <p className="text-sm text-on-surface-variant mb-2">Bạn đã có tài khoản?</p>
+                        <Link to="/login" className="inline-flex items-center gap-2 text-primary uppercase tracking-[0.2em] text-xs font-semibold hover:text-secondary transition-colors">
+                            Chọn đăng nhập ngay
+                            <span className="material-symbols-outlined text-[16px]">arrow_right_alt</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

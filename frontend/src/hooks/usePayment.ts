@@ -53,6 +53,7 @@ export const usePayment = () => {
         cardExpiry: '',
         cardCvv: '',
         promoCode: '',
+
         agreedToTerms: false
     });
 
@@ -95,6 +96,9 @@ export const usePayment = () => {
 
         setIsLoading(true);
         try {
+            const storedUser = localStorage.getItem('user');
+            const currentUser = storedUser ? JSON.parse(storedUser) : null;
+            const currentUserId = currentUser ? currentUser.id : null;
             // Prepare payload containing the LIST OF ROOMS for the Backend
             const payload = {
                 customerName: form.customerName,
@@ -104,7 +108,7 @@ export const usePayment = () => {
                 specialRequests: `Giờ dự kiến: ${form.checkInTimeWindow}. Ghi chú: ${form.note}`,
                 paymentMethod: form.paymentMethod,
                 promoCode: form.promoCode,
-
+                userId: currentUserId,
                 // Map the items to the structure expected by the backend DTO
                 rooms: checkoutItems.map(item => ({
                     roomTypeId: item.roomTypeId,
@@ -120,9 +124,9 @@ export const usePayment = () => {
             if (location.state?.isFromCart) {
                 localStorage.removeItem('hotel_cart');
             }
-
+            const responseData = await bookingService.submitPayment(payload);
             alert('Đặt phòng thành công!');
-            navigate('/success');
+            navigate('/success', { state: { bookingData: responseData } });
         } catch (err: any) {
             alert(err.message || 'Giao dịch thất bại, vui lòng thử lại.');
         } finally {

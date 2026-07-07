@@ -14,6 +14,8 @@ import LoginPage from "../pages/LoginPage/LoginPage.tsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.tsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.tsx";
 import CartPage from "../pages/CartPage/CartPage.tsx";
+import {AdminChat} from "../components/ChatAdminComponent/AdminChat.tsx";
+
 
 
 export default function AppRoutes() {
@@ -30,16 +32,18 @@ export default function AppRoutes() {
             </Route>
 
             {/*chứa header side chung của admin*/}
-            <Route element={<AdminLayout/>}>
-                <Route path="/admin-dashboard" element={<Dashboard/>}/>
-                <Route path={"/admin-booking"} element={<AdminBookingPage/>}/>
-                <Route path={"/admin-roommatrix"} element={<RoomMatrixPage/>}/>
-                <Route path={"/admin-rate"} element={<AdminRatesPage/>}/>
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="booking" element={<AdminBookingPage />} />
+                <Route path="roommatrix" element={<RoomMatrixPage />} />
+                <Route path="rate" element={<AdminRatesPage />} />
+                <Route path="chat" element={<AdminChat/>}/>
             </Route>
 
             <Route path={"/login"} element={<LoginPage/>}/>
             <Route path={"/reset-pass"} element={<ForgotPasswordPage/>}/>
             <Route path={"/register"} element={<RegisterPage/>}/>
+
 
 
         </Routes>

@@ -36,3 +36,16 @@ export const bookingService = {
         throw new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
     }
 };
+
+
+
+// Thêm vào file service nơi chứa các API gọi Backend
+export const fetchBookingHistory = async (userId: number) => {
+    try {
+        // Thay baseURL tùy theo cấu hình axios của bạn
+        const response = await axios.get(`http://localhost:8080/api/bookings/history/${userId}`);
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data || 'Không thể tải lịch sử đặt phòng');
+    }
+};

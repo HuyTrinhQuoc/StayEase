@@ -11,7 +11,7 @@ import project.backend.eNum.UserRole;
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
-    private Integer userId;
+    private Integer id;
     private String name;
     private String email;
     private UserRole role;

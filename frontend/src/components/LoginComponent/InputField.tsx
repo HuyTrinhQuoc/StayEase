@@ -10,15 +10,7 @@ interface InputFieldProps {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const InputField: React.FC<InputFieldProps> = ({
-                                                   label,
-                                                   icon,
-                                                   type = "text",
-                                                   placeholder,
-                                                   name,
-                                                   value,
-                                                   onChange
-                                               }) => {
+const InputField: React.FC<InputFieldProps> = ({ label, icon, type = "text", placeholder, name, value, onChange }) => {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const isPassword = type === "password";
 
@@ -35,9 +27,9 @@ const InputField: React.FC<InputFieldProps> = ({
                     type={isPassword && showPassword ? "text" : type}
                     name={name}
                     value={value}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    className={`w-full bg-transparent border-0 border-b border-outline-variant focus:border-secondary focus:ring-0 pl-8 py-2 outline-none ${isPassword ? 'pr-10' : 'pr-0'}`}
+                onChange={onChange}
+                placeholder={placeholder}
+                className={`w-full bg-transparent border-0 border-b border-outline-variant focus:border-secondary focus:ring-0 pl-8 py-2 outline-none ${isPassword ? 'pr-10' : 'pr-0'}`}
                 />
                 {isPassword && (
                     <button

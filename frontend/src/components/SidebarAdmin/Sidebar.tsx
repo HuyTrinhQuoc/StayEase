@@ -1,5 +1,3 @@
-
-
 const Sidebar = () => {
     return (
         <nav className="bg-background h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col py-8 px-4 z-50">
@@ -17,7 +15,7 @@ const Sidebar = () => {
             <ul className="flex-1 space-y-2">
                 <li>
                     <a
-                        href="#"
+                        href="/admin"
                         className="flex items-center gap-3 px-4 py-3 rounded bg-surface-container text-secondary border-r-2 border-secondary font-label-caps text-label-caps"
                     >
                         <span className="material-symbols-outlined fill">dashboard</span>
@@ -26,15 +24,16 @@ const Sidebar = () => {
                 </li>
 
                 {[
-                    { icon: "calendar_month", label: "Bookings" },
-                    { icon: "grid_view", label: "Room Matrix" },
-                    { icon: "payments", label: "Rates" },
-                    { icon: "concierge", label: "Services" },
-                    { icon: "settings", label: "Settings" },
+                    { icon: "calendar_month", label: "Bookings", path: "/admin/booking" },
+                    { icon: "grid_view", label: "Room Matrix", path: "/admin/roommatrix" },
+                    { icon: "payments", label: "Rates", path: "/admin/rate" },
+                    { icon: "concierge", label: "Services", path: "#" },
+                    { icon: "settings", label: "Settings", path: "#" },
+                    { icon: "forum", label: "Chat Support", path: "/admin/chat" },
                 ].map((item) => (
                     <li key={item.label}>
                         <a
-                            href="#"
+                            href={item.path}
                             className="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors font-label-caps text-label-caps"
                         >
               <span className="material-symbols-outlined">

@@ -17,6 +17,7 @@ public class BookingRequest {
     private String specialRequests;
     private String paymentMethod;
     private String promoCode;
+    private Integer userId;
 
     // The list of rooms being booked
     private List<RoomItemRegister> rooms;

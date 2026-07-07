@@ -4,14 +4,20 @@ package project.backend.controllers;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import project.backend.dto.BookingHistoryResponse;
 import project.backend.dto.BookingRequest;
+import project.backend.entities.Booking;
 import project.backend.services.BookingService;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/bookings") // Hãy đảm bảo đường dẫn này khớp 100% với biến API_URL trong React (như lúc nãy ta đã fix lỗi 404)
-@CrossOrigin(origins = "*") // Bắt buộc phải có để Frontend React (chạy port 3000/5173) có thể gọi được API (port 8080) mà không bị lỗi CORS
+@RequestMapping("/api/bookings")
+@CrossOrigin(origins = "*")
 public class BookingController {
 
     @Autowired
@@ -38,6 +44,21 @@ public class BookingController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    /**
+     * API Lấy lịch sử đặt phòng của một User cụ thể
+     * Method: GET
+     * Endpoint: http://localhost:8080/api/bookings/history/{userId}
+     */
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<?> getBookingHistory(@PathVariable Integer userId) {
+        try {
+            List<BookingHistoryResponse> historyList = bookingService.getBookingHistory(userId);
+            return ResponseEntity.ok(historyList);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
-    // (Sau này bạn có thể viết thêm các API khác ở đây như lấy danh sách lịch sử đặt phòng của user, hủy phòng...)
 }
+
+

@@ -37,5 +37,6 @@ export interface BookingRequestPayload {
     specialRequests: string;
     paymentMethod: string;
     promoCode: string;
+    userId: number | null;
     rooms: RoomItemRegister[];
 }
