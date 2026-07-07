@@ -186,7 +186,7 @@ const AdminDashboardPage = () => {
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-semibold text-gray-700">Sơ đồ phòng rút gọn</h3>
                         <span
-                            onClick={() => navigate("/admin/room-matrix")}
+                            onClick={() => navigate("/admin-roommatrix")}
                             className="text-xs text-indigo-500 cursor-pointer hover:underline font-medium"
                         >
                             Mở rộng
