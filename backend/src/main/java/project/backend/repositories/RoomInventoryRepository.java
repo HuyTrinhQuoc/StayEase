@@ -36,4 +36,6 @@ public interface RoomInventoryRepository
 
     // CHỖ CẦN SỬA: Thay findByDateBetween thành findByIdDateBetween để JPA hiểu là đi vào trong id tìm thuộc tính date
     List<RoomInventory> findByIdDateBetween(LocalDate start, LocalDate end);
+    @Query("SELECT r FROM RoomInventory r WHERE r.id.date BETWEEN :startDate AND :endDate")
+    List<RoomInventory> findByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
