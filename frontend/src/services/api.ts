@@ -5,11 +5,12 @@ import axios from 'axios';
  * Base URL sẽ được cấu hình qua biến môi trường VITE_API_BASE_URL.
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+    // Thay đổi từ 3000 sang 8080 và thêm hẳn /api vào đuôi mặc định
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
 // ── Request interceptor: thêm token xác thực ──

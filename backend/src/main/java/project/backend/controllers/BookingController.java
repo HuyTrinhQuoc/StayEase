@@ -13,9 +13,9 @@ import project.backend.dto.BookingHistoryResponse;
 import project.backend.dto.BookingRequest;
 import project.backend.entities.Booking;
 import project.backend.services.BookingService;
-
 import java.math.BigDecimal;
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/bookings")
