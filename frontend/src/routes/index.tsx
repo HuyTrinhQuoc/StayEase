@@ -13,6 +13,10 @@ import AdminRatesPage from "../pages/AdminRatesPage/AdminRatesPage.tsx";
 import LoginPage from "../pages/LoginPage/LoginPage.tsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.tsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.tsx";
+import CartPage from "../pages/CartPage/CartPage.tsx";
+import {AdminChat} from "../components/ChatAdminComponent/AdminChat.tsx";
+import VNPayReturn from "../components/VnPayReturnComponent/VNPayReturn.tsx";
+
 
 
 export default function AppRoutes() {
@@ -22,22 +26,26 @@ export default function AppRoutes() {
             <Route element={<MainLayout/>}>
                 <Route path="/" element={<HomePage/>}/>
                 <Route path="/room-detail/:id" element={<RoomDetailPage/>}/>
+                <Route path="/cart" element={<CartPage/>}/>
                 <Route path="/payment" element={<PaymentPage/>}/>
                 <Route path="/success" element={<SuccessPage/>}/>
                 <Route path="/history" element={<HistoryPage/>}/>
+                <Route path="/vnpay-return" element={<VNPayReturn />} />
             </Route>
 
             {/*chứa header side chung của admin*/}
-            <Route element={<AdminLayout/>}>
-                <Route path="/admin-dashboard" element={<Dashboard/>}/>
-                <Route path={"/admin-booking"} element={<AdminBookingPage/>}/>
-                <Route path={"/admin-roommatrix"} element={<RoomMatrixPage/>}/>
-                <Route path={"/admin-rate"} element={<AdminRatesPage/>}/>
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="booking" element={<AdminBookingPage />} />
+                <Route path="roommatrix" element={<RoomMatrixPage />} />
+                <Route path="rate" element={<AdminRatesPage />} />
+                <Route path="chat" element={<AdminChat/>}/>
             </Route>
 
             <Route path={"/login"} element={<LoginPage/>}/>
             <Route path={"/reset-pass"} element={<ForgotPasswordPage/>}/>
             <Route path={"/register"} element={<RegisterPage/>}/>
+
 
 
         </Routes>

@@ -3,30 +3,66 @@ package project.backend.controllers;
 
 
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import project.backend.dto.BookingRequestDTO;
+import project.backend.dto.BookingHistoryResponse;
+import project.backend.dto.BookingRequest;
 import project.backend.entities.Booking;
 import project.backend.services.BookingService;
+import java.math.BigDecimal;
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/bookings")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Cho phép React gọi API
+@CrossOrigin(origins = "*")
 public class BookingController {
 
-    private final BookingService bookingService;
+    @Autowired
+    private BookingService bookingService;
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createBooking(@Valid @RequestBody BookingRequestDTO request) {
+    /**
+     * API Xử lý Thanh toán và Đặt phòng
+     * Method: POST
+     * Endpoint: http://localhost:8080/api/bookings/payment
+     */
+    @PostMapping("/payment")
+    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         try {
-            Booking booking = bookingService.processBooking(request);
-            // Nếu dùng cổng thanh toán online như VNPay/MoMo, bạn sẽ trả về URL thanh toán ở đây
-            return ResponseEntity.ok(booking);
-        } catch (IllegalArgumentException e) {
+            // 1. Chuyển toàn bộ dữ liệu (thông tin khách + danh sách phòng) sang Service xử lý
+            var newBooking = bookingService.handleCreateBooking(request);
+
+            // 2. Nếu code chạy mượt mà, lưu thành công -> Trả về HTTP 200 (OK) cùng dữ liệu Booking
+            return ResponseEntity.ok(newBooking);
+
+        } catch (Exception e) {
+            // 3. Bắt lỗi (Ví dụ: ID phòng không tồn tại, tính toán sai, lỗi database...)
+            // Trả về HTTP 400 (Bad Request) kèm theo câu thông báo lỗi
+            // Câu thông báo này sẽ được thằng catch (error) bên React Axios bắt lấy và hiển thị alert
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    /**
+     * API Lấy lịch sử đặt phòng của một User cụ thể
+     * Method: GET
+     * Endpoint: http://localhost:8080/api/bookings/history/{userId}
+     */
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<?> getBookingHistory(@PathVariable Integer userId) {
+        try {
+            List<BookingHistoryResponse> historyList = bookingService.getBookingHistory(userId);
+            return ResponseEntity.ok(historyList);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
+
 }
+
+

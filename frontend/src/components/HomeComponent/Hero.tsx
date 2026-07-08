@@ -11,7 +11,7 @@ const Hero = () => {
 
             <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-5 text-center md:px-16">
                 <h1 className="mb-6 text-5xl font-semibold text-white md:text-7xl">
-                    L'Héritage Luxury
+                    Stay Ease
                 </h1>
                 <p className="mb-12 max-w-2xl text-xl text-white/90">
                     Tận hưởng kỳ nghỉ dưỡng trong mơ tại không gian di sản

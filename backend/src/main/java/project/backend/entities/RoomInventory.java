@@ -2,6 +2,7 @@ package project.backend.entities;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,8 +15,9 @@ public class RoomInventory {
     private RoomInventoryId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("roomTypeId") // Map field roomTypeId của RoomInventoryId với Object RoomType
+    @MapsId("roomTypeId")
     @JoinColumn(name = "room_type_id")
+    @JsonIgnore
     private RoomType roomType;
 
     @Column(nullable = false)

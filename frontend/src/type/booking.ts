@@ -20,3 +20,23 @@ export interface PaymentFormData {
     promoCode: string;
     agreedToTerms: boolean;
 }
+
+// Thêm vào file type/booking.ts hoặc nơi bạn quản lý Type
+export interface RoomItemRegister {
+    roomTypeId: number;
+    checkIn: string;
+    checkOut: string;
+    quantity: number;
+}
+
+export interface BookingRequestPayload {
+    customerName: string;
+    phone: string;
+    email: string;
+    nationality: string;
+    specialRequests: string;
+    paymentMethod: string;
+    promoCode: string;
+    userId: number | null;
+    rooms: RoomItemRegister[];
+}

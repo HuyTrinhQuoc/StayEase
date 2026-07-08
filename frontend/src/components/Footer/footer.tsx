@@ -1,15 +1,15 @@
 const Footer = () => {
     return (
-        <footer className="mt-24 bg-black px-5 pb-8 pt-24 text-white md:px-16">
+        <footer className="mt-24 bg-black px-5 pb-8 pt-24 text-white md:px-16 print:hidden">
             <div className="mx-auto mb-16 grid max-w-[1280px] grid-cols-1 gap-8 md:grid-cols-4">
                 <div className="flex flex-col gap-6">
                     <h2 className="text-2xl font-semibold">
-                        L'Héritage Luxury
+                        Stay Ease
                     </h2>
 
                     <p className="text-sm text-gray-300">
                         Trải nghiệm sự sang trọng thanh lịch và dịch vụ xuất sắc tại
-                        L'Héritage Luxury Hotel.
+                        Stay Ease Hotel.
                     </p>
                 </div>
 
@@ -80,7 +80,7 @@ const Footer = () => {
 
             <div className="mx-auto flex max-w-[1280px] flex-col items-center justify-between gap-4 border-t border-white/20 pt-8 md:flex-row">
                 <p className="text-sm text-gray-400">
-                    © 2024 L'Héritage Luxury Hotel. All rights reserved.
+                    © 2024 Stay Ease Hotel. All rights reserved.
                 </p>
 
                 <div className="flex gap-4">

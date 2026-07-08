@@ -1,7 +1,13 @@
 package project.backend.entities;
 
+
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import project.backend.eNum.BookingStatus;
@@ -9,76 +15,90 @@ import project.backend.eNum.BookingStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
-@Data
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "booking_code", unique = true, nullable = false, length = 10)
     private String bookingCode;
 
+    // NULL nếu khách đặt không qua tài khoản
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user; // Khách đã có tài khoản
+    private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_type_id", nullable = false)
-    private RoomType roomType;
+    // Thông tin khách lưu trú thực tế
+    @Column(name = "guest_name", nullable = false, length = 100)
+    private String guestName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id")
-    private Room room; // Phòng vật lý cụ thể (Staff gắn vào lúc check-in)
+    @Column(name = "guest_phone", nullable = false, length = 20)
+    private String guestPhone;
+
+    @Column(name = "guest_email", nullable = false, length = 150)
+    private String guestEmail;
+
+    @Column(name = "guest_nationality", length = 50)
+    private String guestNationality;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
-    @Column(nullable = false)
+    // Convention: check_in từ 14:00, check_out trước 12:00 — xử lý ở application layer
+    @Column(name = "check_in", nullable = false)
     private LocalDate checkIn;
 
-    @Column(nullable = false)
+    @Column(name = "check_out", nullable = false)
     private LocalDate checkOut;
 
-    @Column(nullable = false)
-    private Integer guestsCount;
+    @Column(name = "total_guests", nullable = false)
+    private Integer totalGuests;
 
-    @Column(nullable = false)
+    // base_price = SUM(bookingDetails.totalRoomPrice)
+    @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal basePrice;
 
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    @Builder.Default
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
-    @Column(nullable = false)
+    // total_price = base_price - discount_amount
+    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "booking_status")
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private BookingStatus status = BookingStatus.pending;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "special_requests", columnDefinition = "TEXT")
     private String specialRequests;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    // Các trường mới để lưu thông tin khách hàng
-    @Column(nullable = false)
-    private String customerName;
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<BookingDetail> bookingDetails = new ArrayList<>();
 
-    @Column(nullable = false)
-    private String phone;
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    @Builder.Default
+    @JsonIgnore
+    private List<Payment> payments = new ArrayList<>();
 
-    @Column(nullable = false)
-    private String email;
-
-    private String nationality;
-
-    private String checkInTimeWindow;
-
-    @Column(columnDefinition = "TEXT")
-    private String note;
-
-    private String paymentMethod;
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
+    private Review review;
 }
+

@@ -1,4 +1,6 @@
+
 import { useNavigate, useLocation } from "react-router-dom";
+
 
 const Sidebar = () => {
     const navigate = useNavigate();
@@ -28,6 +30,38 @@ const Sidebar = () => {
 
             {/* Menu */}
             <ul className="flex-1 space-y-2">
+
+                <li>
+                    <a
+                        href="/admin"
+                        className="flex items-center gap-3 px-4 py-3 rounded bg-surface-container text-secondary border-r-2 border-secondary font-label-caps text-label-caps"
+                    >
+                        <span className="material-symbols-outlined fill">dashboard</span>
+                        Overview
+                    </a>
+                </li>
+
+                {[
+                    { icon: "calendar_month", label: "Bookings", path: "/admin/booking" },
+                    { icon: "grid_view", label: "Room Matrix", path: "/admin/roommatrix" },
+                    { icon: "payments", label: "Rates", path: "/admin/rate" },
+                    { icon: "concierge", label: "Services", path: "#" },
+                    { icon: "settings", label: "Settings", path: "#" },
+                    { icon: "forum", label: "Chat Support", path: "/admin/chat" },
+                ].map((item) => (
+                    <li key={item.label}>
+                        <a
+                            href={item.path}
+                            className="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors font-label-caps text-label-caps"
+                        >
+              <span className="material-symbols-outlined">
+                {item.icon}
+              </span>
+                            {item.label}
+                        </a>
+                    </li>
+                ))}
+
                 {menuItems.map((item) => {
                     // Kiểm tra xem mục này có phải trang hiện tại không
                     const isActive = location.pathname === item.path;
@@ -50,6 +84,7 @@ const Sidebar = () => {
                         </li>
                     );
                 })}
+
             </ul>
 
             {/* Button - Điều hướng nhanh sang trang tạo mới đặt phòng */}

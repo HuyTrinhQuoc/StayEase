@@ -1,34 +1,34 @@
 package project.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.*;
 import project.backend.eNum.RoomStatus;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "rooms")
-@Data
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Room {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_type_id", nullable = false)
+    @JsonIgnore
     private RoomType roomType;
 
-    @Column(nullable = false, unique = true, length = 10)
+    @Column(name = "room_number", unique = true, nullable = false, length = 10)
     private String roomNumber;
 
     @Column(nullable = false)
     private Integer floor;
 
-    @Column(nullable = false)
-    private BigDecimal basePricePerNight;
-
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(columnDefinition = "room_status")
+    @Builder.Default
     private RoomStatus status = RoomStatus.available;
 }
