@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.dto.BookingHistoryResponse;
 import project.backend.dto.BookingRequest;
+import project.backend.dto.RoomMatrixResponse;
 import project.backend.entities.Booking;
 import project.backend.entities.BookingDetail;
 import project.backend.eNum.BookingStatus;
@@ -17,8 +18,10 @@ import project.backend.repositories.UserRepository;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -149,5 +152,73 @@ public class BookingService {
     }
 
 
+    public List<Booking> getAllBookingsForAdmin() {
+        return bookingRepository.findAll();
+    }
 
+    public Object handleAdminCreateBooking(Map<String, Object> payload) {
+        try {
+            // 1. Ép kiểu và lấy các thông tin cơ bản từ payload Front-end gửi lên
+            String guestName = (String) payload.get("guest_name");
+            String guestEmail = (String) payload.get("guest_email");
+            String guestPhone = (String) payload.get("guest_phone");
+
+            java.time.LocalDate checkIn = java.time.LocalDate.parse((String) payload.get("check_in"));
+            java.time.LocalDate checkOut = java.time.LocalDate.parse((String) payload.get("check_out"));
+
+            // Tính toán tổng tiền (Đổi từ Object/Double sang BigDecimal)
+            Number totalAmt = (Number) payload.get("total_price");
+            BigDecimal totalPrice = BigDecimal.valueOf(totalAmt != null ? totalAmt.doubleValue() : 0.0);
+
+            // 2. Build thực thể Entity để lưu xuống database Supabase
+            Booking adminBooking = Booking.builder()
+                    .bookingCode(java.util.UUID.randomUUID().toString().substring(0, 10).toUpperCase())
+                    .guestName(guestName)
+                    .guestEmail(guestEmail)
+                    .guestPhone(guestPhone)
+                    .guestNationality("Việt Nam")
+                    .checkIn(checkIn)
+                    .checkOut(checkOut)
+                    .totalPrice(totalPrice)
+                    .basePrice(totalPrice)
+                    .discountAmount(BigDecimal.ZERO)
+                    .totalGuests(2) // Mặc định hoặc lấy từ form nếu có
+                    .status(project.backend.eNum.BookingStatus.paid) // Đặt tại quầy thông thường chọn trạng thái đã thanh toán luôn
+                    .build();
+
+            return bookingRepository.save(adminBooking);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi xử lý dữ liệu form Admin: " + e.getMessage());
+        }
+    }
+
+    public Object updateBookingStatus(Integer bookingId, String nextStatus) {
+        return null;
+    }
+
+    public List<project.backend.dto.RoomMatrixResponse> getRoomMatrixData(java.time.LocalDate start, java.time.LocalDate end) {
+        // 1. Lấy toàn bộ danh sách bản ghi trong khoảng ngày lọc từ Repository của bạn
+        // Giả định repo của bạn có hàm findByDateBetween
+        var inventories = roomInventoryRepository.findByIdDateBetween(start, end);
+
+        // 2. Nhóm dữ liệu theo Room Type ID bằng Stream API toán học của Java
+        Map<project.backend.entities.RoomType, Map<String, Integer>> grouped = inventories.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        inv -> inv.getRoomType(), // Nhóm theo thực thể RoomType để lấy tên hạng phòng
+                        java.util.stream.Collectors.toMap(
+                                inv -> inv.getDate().toString(), // Key của map con là ngày định dạng chuỗi
+                                inv -> inv.getAvailableCount(),  // Value là số lượng phòng trống
+                                (existing, replacement) -> replacement // Nếu trùng lặp thì đè dữ liệu mới
+                        )
+                ));
+
+        // 3. Chuyển đổi cấu trúc Map vừa gom nhóm thành list DTO trả về cho React
+        return grouped.entrySet().stream().map(entry -> {
+            return project.backend.dto.RoomMatrixResponse.builder()
+                    .roomTypeId(entry.getKey().getId())
+                    .roomTypeName(entry.getKey().getName()) // Lấy tên thật (Ví dụ: Suite Room, VIP Room...)
+                    .inventoryMap(entry.getValue())
+                    .build();
+        }).toList();
+    }
 }
