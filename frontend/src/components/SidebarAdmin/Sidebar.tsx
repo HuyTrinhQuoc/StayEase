@@ -1,19 +1,18 @@
-
 import { useNavigate, useLocation } from "react-router-dom";
-
 
 const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Gom tất cả các menu vào 1 danh sách duy nhất để dễ quản lý vòng lặp và gán route
+    // Tập hợp danh sách menu chuẩn, đồng bộ chính xác các đường dẫn (path) trong dự án của bạn
     const menuItems = [
-        { icon: "dashboard", label: "Overview", path: "/admin-dashboard" },
-        { icon: "calendar_month", label: "Bookings", path: "/admin-booking" },
-        { icon: "grid_view", label: "Room Matrix", path: "/admin-roommatrix" },
-        { icon: "payments", label: "Rates", path: "/admin-rate" },
-        { icon: "room_service", label: "Services", path: "/admin-services" }, // Đổi nhẹ tên icon concierge thành room_service cho đúng chuẩn Material Icon
-        { icon: "settings", label: "Settings", path: "/admin-settings" },
+        { icon: "dashboard", label: "Overview", path: "/admin"},
+        { icon: "calendar_month", label: "Bookings", path: "/admin/booking" },
+        { icon: "grid_view", label: "Room Matrix", path: "/admin/roommatrix" },
+        { icon: "payments", label: "Rates", path: "/admin/rate" },
+        { icon: "room_service", label: "Services", path: "/admin/services" },
+        { icon: "forum", label: "Chat Support", path: "/admin/chat" },
+        { icon: "settings", label: "Settings", path: "/admin/settings" },
     ];
 
     return (
@@ -28,42 +27,10 @@ const Sidebar = () => {
                 </p>
             </div>
 
-            {/* Menu */}
-            <ul className="flex-1 space-y-2">
-
-                <li>
-                    <a
-                        href="/admin"
-                        className="flex items-center gap-3 px-4 py-3 rounded bg-surface-container text-secondary border-r-2 border-secondary font-label-caps text-label-caps"
-                    >
-                        <span className="material-symbols-outlined fill">dashboard</span>
-                        Overview
-                    </a>
-                </li>
-
-                {[
-                    { icon: "calendar_month", label: "Bookings", path: "/admin/booking" },
-                    { icon: "grid_view", label: "Room Matrix", path: "/admin/roommatrix" },
-                    { icon: "payments", label: "Rates", path: "/admin/rate" },
-                    { icon: "concierge", label: "Services", path: "#" },
-                    { icon: "settings", label: "Settings", path: "#" },
-                    { icon: "forum", label: "Chat Support", path: "/admin/chat" },
-                ].map((item) => (
-                    <li key={item.label}>
-                        <a
-                            href={item.path}
-                            className="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors font-label-caps text-label-caps"
-                        >
-              <span className="material-symbols-outlined">
-                {item.icon}
-              </span>
-                            {item.label}
-                        </a>
-                    </li>
-                ))}
-
+            {/* Menu - Đã dọn dẹp các vòng lặp thừa */}
+            <ul className="flex-1 space-y-2 overflow-y-auto">
                 {menuItems.map((item) => {
-                    // Kiểm tra xem mục này có phải trang hiện tại không
+                    // Kiểm tra xem mục này có trùng với URL hiện tại hay không để kích hoạt trạng thái Active
                     const isActive = location.pathname === item.path;
 
                     return (
@@ -72,7 +39,7 @@ const Sidebar = () => {
                                 onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all font-label-caps text-label-caps text-left
                                     ${isActive
-                                    ? "bg-surface-container text-secondary border-r-2 border-secondary font-semibold"
+                                    ? "bg-surface-container text-secondary border-r-2 border-secondary font-semibold shadow-sm"
                                     : "text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors"
                                 }`}
                             >
@@ -84,14 +51,13 @@ const Sidebar = () => {
                         </li>
                     );
                 })}
-
             </ul>
 
             {/* Button - Điều hướng nhanh sang trang tạo mới đặt phòng */}
-            <div className="mt-auto px-4">
+            <div className="mt-auto pt-4 px-4 border-t border-outline-variant">
                 <button
-                    onClick={() => navigate("/admin/bookings/new")} // Hoặc path dẫn tới form tạo đặt phòng của bạn
-                    className="w-full bg-primary text-on-primary font-button text-button py-3 rounded hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                    onClick={() => navigate("/admin/bookings/new")}
+                    className="w-full bg-primary text-on-primary font-button text-button py-3 rounded hover:opacity-90 transition-opacity"
                 >
                     New Booking
                 </button>

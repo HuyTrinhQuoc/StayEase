@@ -2,16 +2,15 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const AdminRatesPage = () => {
-    // State quản lý danh sách hạng phòng và cấu hình giá/quỹ từ API
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState<boolean>(false);
 
-    // 1. Gọi API lấy danh sách toàn bộ hạng phòng và thông tin cấu hình liên quan
+    // 1. Gọi đúng Endpoint gốc /api/v1/room-types để lấy dữ liệu thực tế
     const fetchRoomRatesData = async () => {
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:8080/api/admin/room-types");
+            const response = await axios.get("http://localhost:8080/api/v1/room-types");
             if (response.data && Array.isArray(response.data)) {
                 setRoomTypes(response.data);
             }
@@ -26,42 +25,55 @@ const AdminRatesPage = () => {
         fetchRoomRatesData();
     }, []);
 
-    // 2. Xử lý thay đổi giá trị input trực tiếp trong state
+    // 2. Xử lý thay đổi dữ liệu trên State
     const handleInputChange = (id: number | string, field: string, value: any) => {
         setRoomTypes(prev =>
             prev.map(item => (item.id === id ? { ...item, [field]: value } : item))
         );
     };
 
-    // 3. Xử lý bật/tắt Đóng/Mở trạng thái quỹ phòng (Toggle switch)
+    // 3. Xử lý bật/tắt Đóng / Mở phòng nhanh
     const handleStatusToggle = (id: number | string, currentStatus: boolean) => {
         setRoomTypes(prev =>
             prev.map(item => (item.id === id ? { ...item, isAvailable: !currentStatus } : item))
         );
     };
 
-    // 4. API Gửi cập nhật toàn bộ thay đổi lên hệ thống (Nút "Lưu thay đổi")
+    // 4. Cập nhật ĐỒNG LOẠT
     const handleSaveChanges = async () => {
         setIsSaving(true);
         try {
-            await axios.put("http://localhost:8080/api/admin/room-types/batch-update", roomTypes);
-            alert("Lưu mọi thay đổi thành công!");
-            fetchRoomRatesData(); // Tải lại dữ liệu mới nhất
+            // DỨT ĐIỂM: Chỉ bóc đúng id và basePricePerNight để gửi đi, payload cực nhẹ!
+            const cleanData = roomTypes.map(row => ({
+                id: row.id,
+                basePricePerNight: row.basePricePerNight
+            }));
+
+            await axios.put("http://localhost:8080/api/v1/room-types/admin/rates/batch-update", cleanData);
+
+            alert("Lưu mọi thay đổi giá lên Supabase thành công!");
+            fetchRoomRatesData();
         } catch (error) {
             console.error("Lỗi khi cập nhật dữ liệu:", error);
-            alert("Gặp lỗi khi lưu thay đổi.");
+            alert("Gặp lỗi khi lưu thay đổi hàng loạt.");
         } finally {
             setIsSaving(false);
         }
     };
 
-    // 5. API Gửi cập nhật nhanh cho riêng lẻ từng hạng phòng (Icon Save trên từng dòng)
+    // 5. Cập nhật RIÊNG LẺ
     const handleSaveSingleRow = async (id: number | string) => {
         const targetRow = roomTypes.find(item => item.id === id);
         if (!targetRow) return;
+
         try {
-            await axios.put(`http://localhost:8080/api/admin/room-types/${id}`, targetRow);
-            alert(`Cập nhật thành công cho hạng phòng ${targetRow.typeName}!`);
+            const payload = {
+                id: targetRow.id,
+                basePricePerNight: targetRow.basePricePerNight
+            };
+
+            await axios.put(`http://localhost:8080/api/v1/room-types/admin/rates/update/${id}`, payload);
+            alert(`Cập nhật thành công cho hạng phòng ${targetRow.name}!`);
         } catch (error) {
             console.error("Lỗi cập nhật hạng phòng lẻ:", error);
             alert("Gặp lỗi khi lưu hạng phòng này.");
@@ -69,25 +81,13 @@ const AdminRatesPage = () => {
     };
 
     return (
-        <main
-            className="
-                mt-16
-                h-[calc(100vh-4rem)]
-                overflow-y-auto
-                overflow-x-hidden
-                bg-surface-container-low
-                p-8
-                pb-32
-            "
-        >
+        <main className="mt-16 h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden bg-surface-container-low p-8 pb-32">
             {/* Header */}
             <div className="flex justify-between items-end border-b border-outline-variant pb-6 mb-10">
                 <div>
-                    <h2 className="text-3xl font-semibold text-primary">
-                        Quản lý Phòng & Giá
-                    </h2>
+                    <h2 className="text-3xl font-semibold text-primary">Quản lý Phòng & Giá</h2>
                     <p className="text-on-surface-variant mt-2">
-                        Thiết lập hạng phòng, giá bán và tình trạng phòng trống.
+                        Thiết lập hạng phòng, giá bán trực tiếp kết nối cơ sở dữ liệu Supabase.
                     </p>
                 </div>
 
@@ -104,65 +104,52 @@ const AdminRatesPage = () => {
                 <div className="text-center py-10 text-gray-500 text-sm">Đang tải cấu hình phòng và giá...</div>
             ) : (
                 <>
-                    {/* Room Types */}
+                    {/* Hạng phòng */}
                     <section className="mb-14">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-semibold text-primary">
-                                Hạng phòng
-                            </h3>
-                            <button className="text-secondary flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">
-                                    add
-                                </span>
-                                Thêm hạng phòng
-                            </button>
+                            <h3 className="text-2xl font-semibold text-primary">Hạng phòng</h3>
                         </div>
 
                         <div className="space-y-6">
                             {roomTypes.map((room) => (
-                                <div key={room.id} className="bg-white border border-outline-variant rounded-xl overflow-hidden flex">
+                                <div key={room.id} className="bg-white border border-outline-variant rounded-xl overflow-hidden flex shadow-sm">
                                     <img
-                                        src={room.imageUrl || "https://images.unsplash.com/photo-1566073771259-6a8506099945"}
-                                        alt={room.typeName}
-                                        className="w-52 h-36 object-cover"
+                                        src={
+                                            room.images && room.images.length > 0
+                                                ? (room.images.find((img: any) => img.isPrimary || img.sortOrder === 0)?.url || room.images[0].url)
+                                                : "https://images.unsplash.com/photo-1566073771259-6a8506099945"
+                                        }
+                                        alt={room.name}
+                                        className="w-52 h-36 object-cover rounded-l-xl"
                                     />
                                     <div className="flex-1 p-6 flex justify-between items-center">
                                         <div>
                                             <h4 className="text-xl font-semibold text-primary mb-2">
-                                                {room.typeName}
+                                                {room.name} {/* Khớp đúng thuộc tính name */}
                                             </h4>
                                             <div className="flex gap-5 text-sm text-on-surface-variant">
-                                                <span>{room.capacity || 2} Khách</span>
-                                                <span>{room.roomSize || 45}m²</span>
-                                                <span>{room.bedType || "1 King / 2 Twin"}</span>
+                                                <span>Sức chứa tối đa: {room.maxOccupancy || 2} Khách</span>
+                                                <span>Loại giường: {room.bedType || "Chưa thiết lập"}</span>
                                             </div>
                                         </div>
-                                        <button className="border border-secondary text-secondary px-4 py-2 rounded hover:bg-secondary hover:text-white transition">
-                                            Chỉnh sửa
-                                        </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </section>
 
-                    {/* Pricing */}
+                    {/* Bảng cấu hình giá */}
                     <section className="mb-14">
                         <div className="mb-6">
-                            <h3 className="text-2xl font-semibold text-primary mb-2">
-                                Giá động & Phụ thu
-                            </h3>
-                            <p className="text-on-surface-variant">
-                                Cấu hình giá cơ bản và phụ thu cuối tuần.
-                            </p>
+                            <h3 className="text-2xl font-semibold text-primary mb-2">Giá động & Phụ thu</h3>
                         </div>
 
-                        <div className="bg-white rounded-xl border border-outline-variant overflow-x-auto">
+                        <div className="bg-white rounded-xl border border-outline-variant overflow-x-auto shadow-sm">
                             <table className="w-full min-w-[900px] text-left border-collapse">
                                 <thead className="bg-surface-container-low">
                                 <tr className="text-left border-b border-outline-variant">
                                     <th className="p-4">Hạng phòng</th>
-                                    <th className="p-4">Giá cơ bản</th>
+                                    <th className="p-4">Giá cơ bản theo đêm (VND)</th>
                                     <th className="p-4">Phụ thu cuối tuần</th>
                                     <th className="p-4 text-right">Hành động</th>
                                 </tr>
@@ -170,35 +157,31 @@ const AdminRatesPage = () => {
 
                                 <tbody>
                                 {roomTypes.map((room) => (
-                                    <tr key={room.id} className="border-b border-outline-variant">
-                                        <td className="p-4 font-medium">
-                                            {room.typeName}
-                                        </td>
+                                    <tr key={room.id} className="border-b border-outline-variant hover:bg-gray-50/50">
+                                        <td className="p-4 font-medium">{room.name}</td>
                                         <td className="p-4">
                                             <input
-                                                type="text"
-                                                value={room.basePrice ? room.basePrice.toLocaleString() : ""}
-                                                onChange={(e) => handleInputChange(room.id, "basePrice", Number(e.target.value.replace(/,/g, '')))}
-                                                className="border-b border-outline-variant bg-transparent outline-none focus:border-secondary"
+                                                type="number"
+                                                value={room.basePricePerNight || 0} // Đổi thành basePricePerNight cho khớp Entity của bạn
+                                                onChange={(e) => handleInputChange(room.id, "basePricePerNight", Number(e.target.value))}
+                                                className="border border-gray-300 rounded px-2 py-1 outline-none focus:border-secondary w-44"
                                             />
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
                                                 <span>+</span>
                                                 <input
-                                                    type="text"
+                                                    type="number"
                                                     value={room.weekendSurcharge || 0}
                                                     onChange={(e) => handleInputChange(room.id, "weekendSurcharge", Number(e.target.value))}
-                                                    className="w-16 border-b border-outline-variant bg-transparent outline-none text-center focus:border-secondary"
+                                                    className="w-16 border border-gray-300 rounded px-2 py-1 outline-none text-center focus:border-secondary"
                                                 />
                                                 <span>%</span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-right">
                                             <button onClick={() => handleSaveSingleRow(room.id)} className="text-on-surface-variant hover:text-secondary transition">
-                                                    <span className="material-symbols-outlined">
-                                                        save
-                                                    </span>
+                                                <span className="material-symbols-outlined">save</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -208,23 +191,11 @@ const AdminRatesPage = () => {
                         </div>
                     </section>
 
-                    {/* Allotment */}
+                    {/* Quản lý đóng mở phòng */}
                     <section>
                         <div className="flex justify-between items-end border-b border-outline-variant pb-4 mb-6">
                             <div>
-                                <h3 className="text-2xl font-semibold text-primary">
-                                    Quản lý quỹ phòng
-                                </h3>
-                                <p className="text-on-surface-variant mt-1">
-                                    Đóng / mở phòng theo từng giai đoạn.
-                                </p>
-                            </div>
-
-                            <div className="border border-outline-variant rounded px-4 py-2 flex items-center gap-3 bg-white">
-                                <span className="material-symbols-outlined">
-                                    calendar_today
-                                </span>
-                                <span>15/10 - 22/10/2026</span>
+                                <h3 className="text-2xl font-semibold text-primary">Quản lý quỹ phòng</h3>
                             </div>
                         </div>
 
@@ -232,28 +203,22 @@ const AdminRatesPage = () => {
                             {roomTypes.map((room) => (
                                 <div
                                     key={room.id}
-                                    className={`bg-white border border-outline-variant rounded-xl p-5 flex justify-between items-center transition-opacity ${!room.isAvailable ? 'opacity-70' : ''}`}
+                                    className={`bg-white border border-outline-variant rounded-xl p-5 flex justify-between items-center transition-all ${room.isAvailable === false ? 'opacity-50 bg-gray-50' : ''}`}
                                 >
                                     <div>
-                                        <h4 className="font-semibold text-lg">
-                                            {room.typeName}
-                                        </h4>
-                                        {room.isAvailable ? (
-                                            <p className="text-sm text-on-surface-variant mt-1">
-                                                Sẵn sàng: {room.availableRooms || 0} phòng
-                                            </p>
+                                        <h4 className="font-semibold text-lg">{room.name}</h4>
+                                        {room.isAvailable !== false ? (
+                                            <p className="text-sm text-green-600 mt-1">Đang hoạt động trên hệ thống</p>
                                         ) : (
-                                            <p className="text-sm text-red-500 mt-1">
-                                                Đã đóng cho giai đoạn này
-                                            </p>
+                                            <p className="text-sm text-red-500 mt-1">Đã đóng tạm thời</p>
                                         )}
                                     </div>
 
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
                                             type="checkbox"
-                                            checked={!!room.isAvailable}
-                                            onChange={() => handleStatusToggle(room.id, !!room.isAvailable)}
+                                            checked={room.isAvailable !== false}
+                                            onChange={() => handleStatusToggle(room.id, room.isAvailable !== false)}
                                             className="sr-only peer"
                                         />
                                         <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-secondary"></div>
