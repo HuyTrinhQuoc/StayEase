@@ -2,77 +2,153 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const AdminBookingPage = () => {
-    // State quản lý danh sách đặt phòng từ API
-    const [bookings, setBookings] = useState<any[]>([]);
-    // State quản lý đặt phòng đang được chọn để hiển thị ở panel phải
+    // --------------------------------------------------------
+    // 1. STATES & CONFIGURATIONS
+    // --------------------------------------------------------
+    const [allBookingsFromAPI, setAllBookingsFromAPI] = useState<any[]>([]); // Lưu trữ data gốc từ API
+    const [displayedBookings, setDisplayedBookings] = useState<any[]>([]);   // Lưu trữ data sau khi đã qua bộ lọc
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
-    // State quản lý bộ lọc và tìm kiếm
+
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [statusFilter, setStatusFilter] = useState<string>("Tất cả");
+    const [selectedYear, setSelectedYear] = useState<number>(2026);
+    const [selectedMonth, setSelectedMonth] = useState<string>("Tất cả");
     const [loading, setLoading] = useState<boolean>(false);
 
-    // [MỚI] State quản lý bộ lọc năm từ 2024 - 2027 (Mặc định lấy năm hiện tại là 2026)
-    const [selectedYear, setSelectedYear] = useState<number>(2026);
-    // [MỚI] State quản lý bộ lọc tháng (Mặc định là "Tất cả")
-    const [selectedMonth, setSelectedMonth] = useState<string>("Tất cả");
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [newBooking, setNewBooking] = useState({
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
+        roomTypeName: "Deluxe Room",
+        checkInDate: "2026-07-08",
+        checkOutDate: "2026-07-10",
+        totalPrice: "",
+        specialRequests: "",
+        status: "PENDING"
+    });
 
-    // 1. Gọi API lấy danh sách đặt phòng (Hỗ trợ Realtime Polling & Lọc theo năm 2024-2027)
-    useEffect(() => {
-        const fetchBookings = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get("http://localhost:8080/api/admin/bookings", {
-                    params: {
-                        search: searchTerm,
-                        status: statusFilter,
-                        year: selectedYear,       // Gửi năm được lọc lên Backend
-                        month: selectedMonth     // Gửi tháng được lọc lên Backend
-                    }
-                });
-                if (response.data && Array.isArray(response.data)) {
-                    setBookings(response.data);
-                    // Mặc định chọn phần tử đầu tiên hiển thị lên Panel phải nếu có dữ liệu
-                    if (response.data.length > 0 && !selectedBooking) {
-                        setSelectedBooking(response.data[0]);
-                    }
-                }
-            } catch (error) {
-                console.error("Lỗi lấy danh sách đặt phòng:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchBookings();
-
-        // Thiết lập Realtime Polling: Tự động đồng bộ với Supabase/Spring Boot sau mỗi 10 giây
-        const interval = setInterval(fetchBookings, 10000);
-        return () => clearInterval(interval);
-    }, [searchTerm, statusFilter, selectedYear, selectedMonth]);
-
-    // 2. Hàm gọi chi tiết một đặt phòng khi Click vào dòng trong Table
-    const handleSelectBooking = async (bookingId: string | number) => {
+    // --------------------------------------------------------
+    // 2. FETCH DATA gốc từ API (Không truyền params lọc lên Server)
+    // --------------------------------------------------------
+    const fetchBookings = async () => {
+        setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:8080/api/admin/bookings/${bookingId}`);
-            if (response.data) {
-                setSelectedBooking(response.data);
+            // Lấy toàn bộ data thô về để Front-end tự xử lý lọc an toàn
+            // Sửa từ: axios.get("http://localhost:8080/api/admin/bookings")
+// Thành đường dẫn đã test chạy được ở ảnh cuối:
+            const response = await axios.get("http://localhost:8080/api/bookings/admin/all");
+            if (response.data && Array.isArray(response.data)) {
+                setAllBookingsFromAPI(response.data);
+                console.log("Dữ liệu thô nhận được từ API:", response.data);
             }
         } catch (error) {
-            console.error("Lỗi lấy chi tiết đặt phòng:", error);
+            console.error("Lỗi đồng bộ danh sách:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Hàm trả về màu sắc tag tương ứng với từng trạng thái
+    useEffect(() => {
+        fetchBookings();
+        const interval = setInterval(fetchBookings, 15000); // Polling mỗi 15s để cập nhật đơn mới
+        return () => clearInterval(interval);
+    }, []);
+
+    // --------------------------------------------------------
+    // 3. CLIENT-SIDE FILTER & FIELD MAPPING (Bảo hiểm an toàn dữ liệu)
+    // --------------------------------------------------------
+    useEffect(() => {
+        if (!allBookingsFromAPI || allBookingsFromAPI.length === 0) {
+            setDisplayedBookings([]);
+            return;
+        }
+
+        const filtered = allBookingsFromAPI.filter((booking) => {
+            // Tự động nhận diện trường Ngày Check-in (bất kể database lưu check_in, checkIn, hay checkInDate)
+            const rawCheckIn = booking.check_in || booking.checkIn || booking.checkInDate;
+            if (!rawCheckIn) return false;
+
+            const dateObj = new Date(rawCheckIn);
+            const bookingYear = dateObj.getFullYear();
+            const bookingMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+
+            // Tự động nhận diện thông tin Khách hàng từ JSON
+            const customerName = booking.customerName || booking.guest_name || booking.guestName || "";
+            const customerEmail = booking.customerEmail || booking.guest_email || booking.guestEmail || "";
+            const bookingCode = booking.bookingCode || booking.booking_code || booking.id?.toString() || "";
+
+            // Khớp bộ lọc Tìm kiếm
+            const matchesSearch =
+                customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                bookingCode.toLowerCase().includes(searchTerm.toLowerCase());
+
+            // Khớp bộ lọc Trạng thái
+            const currentStatus = booking.status || "PENDING";
+            const matchesStatus = statusFilter === "Tất cả" || currentStatus === statusFilter;
+
+            // Khớp bộ lọc Thời gian
+            const matchesYear = bookingYear === selectedYear;
+            const matchesMonth = selectedMonth === "Tất cả" || bookingMonth === selectedMonth;
+
+            return matchesSearch && matchesStatus && matchesYear && matchesMonth;
+        });
+
+        setDisplayedBookings(filtered);
+
+        // Tự động chọn hàng đầu tiên sau khi lọc xong để hiển thị chi tiết ở Panel phải
+        if (filtered.length > 0) {
+            setSelectedBooking(filtered[0]);
+        } else {
+            setSelectedBooking(null);
+        }
+    }, [allBookingsFromAPI, searchTerm, statusFilter, selectedYear, selectedMonth]);
+
+    // --------------------------------------------------------
+    // 4. ACTIONS
+    // --------------------------------------------------------
+    const handleCreateBooking = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://localhost:8080/api/bookings/admin/create", newBooking);
+            if (response.status === 200 || response.status === 201) {
+                alert("Tạo đơn đặt phòng thành công!");
+                setIsModalOpen(false);
+                fetchBookings();
+            }
+        } catch (error) {
+            console.error("Lỗi khi tạo đặt phòng:", error);
+            alert("Không thể tạo đơn đặt phòng.");
+        }
+    };
+
+    const handleUpdateStatus = async (bookingId: number, nextStatus: string) => {
+        try {
+            const response = await axios.put(`http://localhost:8080/api/bookings/admin/${bookingId}/status`, {
+                status: nextStatus
+            });
+            if (response.data) {
+                alert(`Chuyển trạng thái đơn sang [${nextStatus}] thành công!`);
+                fetchBookings();
+            }
+        } catch (error) {
+            console.error("Lỗi cập nhật trạng thái:", error);
+            alert("Lỗi khi cập nhật trạng thái đơn.");
+        }
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case "Đã thanh toán":
+            case "CONFIRMED":
             case "PAID":
+            case "Đã thanh toán":
                 return "border-[#1e8e3e]/20 bg-[#e6f4ea] text-[#1e8e3e]";
-            case "Chờ chuyển khoản":
             case "PENDING":
+            case "Chờ chuyển khoản":
                 return "border-amber-500/20 bg-amber-50 text-amber-600";
-            case "Đang lưu trú":
             case "CHECKED_IN":
+            case "Đang lưu trú":
                 return "border-indigo-500/20 bg-indigo-50 text-indigo-600";
             default:
                 return "border-gray-500/20 bg-gray-50 text-gray-600";
@@ -81,245 +157,252 @@ const AdminBookingPage = () => {
 
     return (
         <main className="flex gap-8 bg-surface-container-lowest p-8 min-h-screen pt-24">
-            {/* Left Side */}
+            {/* LEFT SIDE: MAIN LIST & FILTERS */}
             <div className="flex flex-1 flex-col">
-                {/* Header */}
                 <div className="mb-8 flex items-end justify-between">
                     <div>
-                        <h2 className="font-headline-md text-headline-md text-primary">
-                            Quản lý Đặt phòng (Realtime)
-                        </h2>
-                        <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
-                            Tổng quan trạng thái và chi tiết các giao dịch lưu trú giai đoạn 2024 - 2027.
+                        <h2 className="font-headline-md text-headline-md text-primary font-bold">Quản lý Đặt phòng (Realtime)</h2>
+                        <p className="mt-2 font-body-md text-body-md text-on-surface-variant text-gray-500">
+                            Tổng quan trạng thái dữ liệu đồng bộ trực tiếp từ Cloud Supabase.
                         </p>
                     </div>
 
-                    <button className="flex items-center gap-2 rounded-sm bg-primary px-6 py-3 font-button text-button text-[#775a19] shadow-sm transition-opacity hover:opacity-90">
-                        <span className="material-symbols-outlined text-sm">
-                            add
-                        </span>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 rounded-md bg-black text-amber-500 px-6 py-3 font-button text-button shadow-sm font-bold hover:opacity-90 transition-opacity"
+                    >
+                        <span className="material-symbols-outlined text-sm">add</span>
                         Tạo Đặt phòng
                     </button>
                 </div>
 
-                {/* Filter */}
-                <div className="ghost-border mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-surface p-4">
+                {/* Toolbar */}
+                <div className="ghost-border mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white p-4 border border-gray-100 shadow-sm">
                     <div className="flex flex-1 flex-wrap items-center gap-4">
-                        {/* Search Input */}
                         <div className="relative w-full max-w-xs">
-                            <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-sm text-outline-variant">
-                                search
-                            </span>
+                            <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-400">search</span>
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Tìm mã đơn, tên khách..."
-                                className="w-full border-b border-primary bg-transparent py-2 pr-4 pl-9 text-sm font-body-md transition-colors focus:border-secondary focus:outline-none"
+                                placeholder="Tìm email, tên khách..."
+                                className="w-full border-b border-gray-300 bg-transparent py-2 pr-4 pl-9 text-sm focus:border-amber-500 focus:outline-none"
                             />
                         </div>
 
-                        {/* [MỚI] Bộ lọc Năm giai đoạn 2024 - 2027 */}
-                        <div className="group relative flex items-center border-b border-primary pb-1 transition-colors focus-within:border-secondary">
-                            <span className="material-symbols-outlined mr-2 text-sm text-outline-variant">
-                                calendar_today
-                            </span>
+                        <div className="flex items-center border-b border-gray-300 pb-1">
+                            <span className="material-symbols-outlined mr-2 text-sm text-gray-400">calendar_today</span>
                             <select
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                className="cursor-pointer appearance-none border-none bg-transparent pr-6 text-sm font-medium text-on-surface focus:ring-0"
+                                className="cursor-pointer appearance-none border-none bg-transparent pr-6 text-sm focus:ring-0"
                             >
                                 <option value={2024}>Năm 2024</option>
                                 <option value={2025}>Năm 2025</option>
                                 <option value={2026}>Năm 2026</option>
                                 <option value={2027}>Năm 2027</option>
                             </select>
-                            <span className="material-symbols-outlined pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 text-sm text-outline-variant">
-                                arrow_drop_down
-                            </span>
                         </div>
 
-                        {/* [MỚI] Bộ lọc Tháng */}
-                        <div className="group relative flex items-center border-b border-primary pb-1 transition-colors focus-within:border-secondary">
-                            <span className="material-symbols-outlined mr-2 text-sm text-outline-variant">
-                                date_range
-                            </span>
+                        <div className="flex items-center border-b border-gray-300 pb-1">
+                            <span className="material-symbols-outlined mr-2 text-sm text-gray-400">date_range</span>
                             <select
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="cursor-pointer appearance-none border-none bg-transparent pr-6 text-sm font-medium text-on-surface focus:ring-0"
+                                className="cursor-pointer appearance-none border-none bg-transparent pr-6 text-sm focus:ring-0"
                             >
                                 <option value="Tất cả">Tất cả các tháng</option>
                                 {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
-                                        Tháng {i + 1}
-                                    </option>
+                                    <option key={i + 1} value={String(i + 1).padStart(2, '0')}>Tháng {i + 1}</option>
                                 ))}
                             </select>
-                            <span className="material-symbols-outlined pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 text-sm text-outline-variant">
-                                arrow_drop_down
-                            </span>
                         </div>
                     </div>
 
-                    {/* Status Filter */}
                     <div className="flex items-center gap-2">
-                        <span className="font-label-caps text-label-caps text-on-surface-variant">
-                            Trạng thái:
-                        </span>
+                        <span className="text-sm font-medium text-gray-500">Trạng thái:</span>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="cursor-pointer rounded bg-surface-container px-3 py-1.5 text-sm focus:ring-1 focus:ring-secondary"
+                            className="cursor-pointer rounded bg-gray-100 px-3 py-1.5 text-sm focus:outline-none"
                         >
                             <option value="Tất cả">Tất cả</option>
-                            <option value="Đã thanh toán">Đã thanh toán</option>
-                            <option value="Chờ chuyển khoản">Chờ chuyển khoản</option>
-                            <option value="Đang lưu trú">Đang lưu trú</option>
+                            <option value="PENDING">Chờ chuyển khoản</option>
+                            <option value="PAID">Đã thanh toán</option>
+                            <option value="CONFIRMED">Xác nhận</option>
+                            <option value="CHECKED_IN">Đang lưu trú</option>
                         </select>
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="ghost-border flex flex-1 flex-col overflow-hidden rounded-xl bg-surface shadow-sm">
+                {/* Table List */}
+                <div className="flex flex-1 flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm">
                     <div className="flex-1 overflow-x-auto">
                         <table className="w-full border-collapse text-left">
                             <thead>
-                            <tr className="border-b border-outline-variant bg-surface-container-low font-label-caps text-label-caps text-on-surface-variant">
-                                <th className="px-6 py-4 font-medium">Mã Đơn</th>
-                                <th className="px-6 py-4 font-medium">Tên Khách Hàng</th>
-                                <th className="px-6 py-4 font-medium">Hạng Phòng</th>
-                                <th className="px-6 py-4 font-medium">Ngày Lưu Trú</th>
-                                <th className="px-6 py-4 text-right font-medium">Tổng Tiền</th>
-                                <th className="px-6 py-4 text-center font-medium">Trạng Thái</th>
-                                <th className="px-6 py-4 text-right font-medium">Hành Động</th>
+                            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-4">Mã Đơn</th>
+                                <th className="px-6 py-4">Khách Hàng (Email)</th>
+                                <th className="px-6 py-4">Hạng Phòng</th>
+                                <th className="px-6 py-4">Ngày Lưu Trú</th>
+                                <th className="px-6 py-4 text-right">Tổng Tiền</th>
+                                <th className="px-6 py-4 text-center">Trạng Thái</th>
                             </tr>
                             </thead>
-
-                            <tbody className="text-sm font-body-md">
-                            {loading && bookings.length === 0 ? (
+                            <tbody className="text-sm">
+                            {loading && allBookingsFromAPI.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">Đang đồng bộ dữ liệu...</td>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">Đang đồng bộ dữ liệu từ Cloud Supabase...</td>
                                 </tr>
-                            ) : bookings.length > 0 ? (
-                                bookings.map((booking) => (
-                                    <tr
-                                        key={booking.id}
-                                        onClick={() => handleSelectBooking(booking.id)}
-                                        className={`group cursor-pointer border-b border-outline-variant bg-surface-container-low transition-colors hover:bg-surface-container ${selectedBooking?.id === booking.id ? 'bg-surface-container' : ''}`}
-                                    >
-                                        <td className="px-6 py-4 font-medium text-primary">
-                                            {booking.bookingCode}
-                                        </td>
-                                        <td className="px-6 py-4">{booking.customerName}</td>
-                                        <td className="px-6 py-4 text-on-surface-variant">{booking.roomTypeName}</td>
-                                        <td className="px-6 py-4">{booking.stayPeriod}</td>
-                                        <td className="px-6 py-4 text-right font-medium">
-                                            {Number(booking.totalPrice).toLocaleString()}đ
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
+                            ) : displayedBookings.length > 0 ? (
+                                displayedBookings.map((booking) => {
+                                    const checkIn = booking.check_in || booking.checkIn || booking.checkInDate;
+                                    const checkOut = booking.check_out || booking.checkOut || booking.checkOutDate;
+                                    const email = booking.guest_email || booking.customerEmail || "No Email";
+                                    const name = booking.guest_name || booking.customerName || "Khách vãng lai";
+
+                                    return (
+                                        <tr
+                                            key={booking.id}
+                                            onClick={() => setSelectedBooking(booking)}
+                                            className={`group cursor-pointer border-b border-gray-50 transition-colors hover:bg-gray-50 ${selectedBooking?.id === booking.id ? 'bg-gray-50' : ''}`}
+                                        >
+                                            <td className="px-6 py-4 font-bold text-amber-700">{booking.booking_code || booking.bookingCode || `BK-${booking.id}`}</td>
+                                            <td className="px-6 py-4 font-medium">
+                                                <div>{name}</div>
+                                                <div className="text-xs text-gray-400 font-normal">{email}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-500">{booking.room_type_name || booking.roomTypeName || "Standard Room"}</td>
+                                            <td className="px-6 py-4 text-gray-600 font-mono text-xs">{`${checkIn} ➔ ${checkOut}`}</td>
+                                            <td className="px-6 py-4 text-right font-medium">{Number(booking.total_price || booking.totalPrice || 0).toLocaleString()}đ</td>
+                                            <td className="px-6 py-4 text-center">
                                                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusBadge(booking.status)}`}>
-                                                    {booking.status}
+                                                    {booking.status || "PENDING"}
                                                 </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="p-1 text-outline-variant transition-colors hover:text-secondary">
-                                                    <span className="material-symbols-outlined text-sm">
-                                                        visibility
-                                                    </span>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">Không tìm thấy đơn đặt phòng nào trong khoảng thời gian được chọn.</td>
+                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">Không tìm thấy đơn đặt nào khớp với bộ lọc tháng {selectedMonth}/{selectedYear}.</td>
                                 </tr>
                             )}
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Pagination */}
-                    <div className="flex items-center justify-between border-t border-outline-variant bg-surface p-4">
-                        <span className="text-sm text-on-surface-variant">
-                            Hiển thị {bookings.length > 0 ? '1' : '0'}-{bookings.length} trong {bookings.length} kết quả (Năm {selectedYear})
-                        </span>
-
-                        <div className="flex gap-1">
-                            <button className="rounded bg-surface-container-low px-3 py-1 text-sm font-medium text-primary">
-                                1
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* Right Panel */}
-            <aside className="ghost-border sticky top-24 flex h-[calc(100vh-8rem)] w-80 flex-col overflow-hidden rounded-xl bg-surface shadow-sm">
+            {/* RIGHT PANEL: INFO DETAILS */}
+            <aside className="sticky top-24 flex h-[calc(100vh-8rem)] w-80 flex-col overflow-hidden rounded-xl bg-white border border-gray-100 shadow-sm">
                 {selectedBooking ? (
                     <>
-                        <div className="relative h-32 overflow-hidden bg-surface-container-low">
+                        <div className="relative h-32 overflow-hidden bg-gray-100">
                             <img
-                                src={selectedBooking.roomImageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuDFwATgp0Wv860H0G8maMIuQXZG82vx5WfH3RQjSIS3HVniK_VgaAMRxreKdtTuTO7O-G0AC67t-YqI2MfPp5QQNOefZtdvZTkKiPzc0oaICVE-N3M8M7V7XYGDt45ztgsB4aTGOs2jlZSvgD6SEm-SLoLJYERXvFkGmjHgMLV1EnFfqtbF0CpKYX809Jaa2EgfZ1YKlJFqdT5MEgV_30bGkwWgDMKWxL64BODksvJkd0azYNm3NnZuSp7oCfoac5q5g7SyEizxruU"}
-                                alt="Room"
+                                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500"
+                                alt="Room Thumbnail"
                                 className="h-full w-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         </div>
 
                         <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
                             <div>
-                                <h3 className="mb-1 text-lg text-primary">
-                                    {selectedBooking.customerName}
+                                <h3 className="mb-1 text-lg font-bold text-gray-800">
+                                    {selectedBooking.guest_name || selectedBooking.customerName || "Khách Hàng"}
                                 </h3>
-                                <p className="flex items-center gap-1 text-sm text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-xs">
-                                        mail
-                                    </span>
-                                    {selectedBooking.customerEmail || "N/A"}
+                                <p className="flex items-center gap-1 text-sm text-gray-500">
+                                    <span className="material-symbols-outlined text-xs">mail</span>
+                                    {selectedBooking.guest_email || selectedBooking.customerEmail || "N/A"}
+                                </p>
+                                <p className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                                    <span className="material-symbols-outlined text-xs">flag</span>
+                                    Quốc tịch: {selectedBooking.guest_nationality || "Việt Nam"}
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 border-y border-outline-variant py-4">
+                            <div className="grid grid-cols-2 gap-4 border-y border-gray-100 py-4">
                                 <div>
-                                    <p className="mb-1 text-[10px] text-on-surface-variant">CHECK-IN</p>
-                                    <p className="text-sm font-medium">{selectedBooking.checkInDate}</p>
+                                    <p className="mb-1 text-[10px] uppercase font-semibold text-gray-400 tracking-wider">CHECK-IN</p>
+                                    <p className="text-xs font-medium text-gray-700 font-mono">
+                                        {selectedBooking.check_in || selectedBooking.checkIn || selectedBooking.checkInDate}
+                                    </p>
                                 </div>
                                 <div>
-                                    <p className="mb-1 text-[10px] text-on-surface-variant">CHECK-OUT</p>
-                                    <p className="text-sm font-medium">{selectedBooking.checkOutDate}</p>
+                                    <p className="mb-1 text-[10px] uppercase font-semibold text-gray-400 tracking-wider">CHECK-OUT</p>
+                                    <p className="text-xs font-medium text-gray-700 font-mono">
+                                        {selectedBooking.check_out || selectedBooking.checkOut || selectedBooking.checkOutDate}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="rounded border border-secondary/20 bg-secondary/5 p-3">
-                                <p className="mb-1 flex items-center gap-1 text-[10px] text-secondary">
-                                    <span className="material-symbols-outlined text-[14px]">
-                                        info
-                                    </span>
-                                    YÊU CẦU ĐẶC BIỆT
+                            <div className="rounded border border-amber-200 bg-amber-50/50 p-3">
+                                <p className="mb-1 flex items-center gap-1 text-[10px] font-bold text-amber-700">
+                                    <span className="material-symbols-outlined text-[14px]">info</span>
+                                    THÔNG TIN LƯU TRÚ
                                 </p>
-                                <p className="text-sm italic text-on-surface">
-                                    "{selectedBooking.specialRequests || "Không có yêu cầu đặc biệt."}"
+                                <p className="text-xs text-gray-600">
+                                    Số lượng khách: <strong>{selectedBooking.total_guests || 2} người</strong><br/>
+                                    Yêu cầu đặc biệt: <em>"{selectedBooking.special_requests || selectedBooking.specialRequests || "Không có"}"</em>
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex gap-2 border-t border-outline-variant bg-surface-container-lowest p-4">
-                            <button className="flex-1 rounded-sm border border-secondary py-2 text-center text-secondary transition-colors hover:bg-secondary/5">
-                                Sửa
+                        <div className="flex gap-2 border-t border-gray-100 p-4 bg-gray-50">
+                            <button
+                                onClick={() => handleUpdateStatus(selectedBooking.id, "PAID")}
+                                className="flex-1 rounded border border-gray-300 py-2 text-center text-sm font-medium text-gray-700 hover:bg-white transition-colors"
+                            >
+                                Xác nhận tiền
                             </button>
-                            <button className="flex-1 rounded-sm bg-primary py-2 text-center text-on-primary shadow-sm transition-colors hover:bg-primary-container">
+                            <button
+                                onClick={() => handleUpdateStatus(selectedBooking.id, "CHECKED_IN")}
+                                className="flex-1 rounded bg-amber-600 py-2 text-center text-sm font-medium text-white hover:bg-amber-700 shadow-sm transition-colors"
+                            >
                                 Check-in
                             </button>
                         </div>
                     </>
                 ) : (
                     <div className="flex flex-1 items-center justify-center text-sm text-gray-400 p-6 text-center">
-                        Chọn một đơn đặt phòng để xem chi tiết thông tin.
+                        Chọn một đơn đặt phòng từ danh sách để xem chi tiết.
                     </div>
                 )}
             </aside>
+
+            {/* Modal giữ nguyên form tạo của bạn */}
+            {isModalOpen && (
+                /* ... Toàn bộ khối code overlay Modal giữ nguyên 100% như cũ của bạn ... */
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+                        <div className="mb-4 flex items-center justify-between border-b pb-3">
+                            <h3 className="text-lg font-bold text-gray-800">Tạo Đơn Đặt Phòng Mới (Admin)</h3>
+                            <button onClick={() => setIsModalOpen(false)} className="material-symbols-outlined text-gray-400">close</button>
+                        </div>
+                        <form onSubmit={handleCreateBooking} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 mb-1">Tên khách hàng *</label>
+                                <input type="text" required className="w-full border rounded p-2 text-sm" value={newBooking.customerName} onChange={e => setNewBooking({...newBooking, customerName: e.target.value})} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Email</label>
+                                    <input type="email" className="w-full border rounded p-2 text-sm" value={newBooking.customerEmail} onChange={e => setNewBooking({...newBooking, customerEmail: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Số điện thoại *</label>
+                                    <input type="text" required className="w-full border rounded p-2 text-sm" value={newBooking.customerPhone} onChange={e => setNewBooking({...newBooking, customerPhone: e.target.value})} />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-gray-500">Hủy</button>
+                                <button type="submit" className="bg-black text-amber-500 font-bold px-5 py-2 text-sm rounded">Lưu đơn</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };

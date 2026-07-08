@@ -22,4 +22,8 @@ public class RoomInventory {
 
     @Column(nullable = false)
     private Integer availableCount;
+
+    public Object getDate() {
+        return id.getDate();
+    }
 }
