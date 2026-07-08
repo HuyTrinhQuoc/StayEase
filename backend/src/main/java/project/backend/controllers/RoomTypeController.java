@@ -8,6 +8,7 @@ import project.backend.entities.RoomType;
 import project.backend.services.CatalogService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/room-types")
@@ -76,6 +77,54 @@ public class RoomTypeController {
         } catch (Exception e) {
             // Tránh crash app nếu hạng phòng này đang có phòng vật lý hoạt động hoặc đơn đặt phòng dính líu
             return ResponseEntity.badRequest().body("Lỗi: Không thể xóa hạng phòng này do đang có dữ liệu phòng vật lý hoặc đơn đặt phòng liên kết!");
+        }
+    }
+
+    @Autowired
+    private project.backend.repositories.RoomTypeRepository roomTypeRepository;
+
+    // DỨT ĐIỂM: Sử dụng Java Record thay cho Class DTO.
+    // Tự động map JSON chuẩn 100%, không bao giờ lo lỗi ép kiểu!
+    public record RateRequest(Integer id, Double basePricePerNight) {
+    }
+
+    // API 6: Cập nhật lẻ
+    @PutMapping("/admin/rates/update/{id}")
+    @Transactional // Ép Transaction ngay tại Controller để không bị lỗi từ chối cập nhật
+    public ResponseEntity<?> updateRoomRates(@PathVariable Integer id, @RequestBody RateRequest payload) {
+        try {
+            System.out.println("--- LOG UPDATE: ID=" + id + " | Price=" + payload.basePricePerNight());
+
+            int updatedRows = roomTypeRepository.updateRoomPriceOnly(id, payload.basePricePerNight());
+
+            if (updatedRows > 0) {
+                return ResponseEntity.ok().body(Map.of("message", "Cập nhật giá thành công!"));
+            }
+            return ResponseEntity.status(404).body(Map.of("error", "Không tìm thấy hạng phòng ID: " + id));
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi ra terminal IntelliJ
+            // Trả ngược chi tiết lỗi gốc về trình duyệt để kiểm tra
+            String details = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage(), "details", details));
+        }
+    }
+
+    // API 7: Cập nhật hàng loạt
+    @PutMapping("/admin/rates/batch-update")
+    @Transactional
+    public ResponseEntity<?> batchUpdateRoomRates(@RequestBody List<RateRequest> payloadList) {
+        try {
+            System.out.println("--- LOG BATCH UPDATE: Đang xử lý " + payloadList.size() + " dòng ---");
+
+            for (RateRequest payload : payloadList) {
+                roomTypeRepository.updateRoomPriceOnly(payload.id(), payload.basePricePerNight());
+            }
+
+            return ResponseEntity.ok().body(Map.of("message", "Đồng bộ dữ liệu giá thành công!"));
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi ra terminal IntelliJ
+            String details = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage(), "details", details));
         }
     }
 }
