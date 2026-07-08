@@ -41,7 +41,8 @@ public class FileUploadController {
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             // Đẩy file thẳng lên Cloudinary
-            Map uploadResult = getCloudinary().uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            // Thêm tuỳ chọn resource_type = auto để Cloudinary tự nhận diện file là ảnh hay tệp tin tài liệu
+            Map uploadResult = getCloudinary().uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
 
             // Lấy đường link HTTPS công khai mà Cloudinary trả về
             String fileUrl = uploadResult.get("secure_url").toString();

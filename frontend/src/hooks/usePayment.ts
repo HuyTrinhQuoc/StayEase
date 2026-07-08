@@ -84,6 +84,66 @@ export const usePayment = () => {
         }
     };
 
+    // const handleFinalSubmit = async () => {
+    //     if (!form.customerName || !form.phone || !form.email) {
+    //         alert('Vui lòng điền đầy đủ thông tin khách hàng bắt buộc.');
+    //         return;
+    //     }
+    //     if (!form.agreedToTerms) {
+    //         alert('Bạn cần đồng ý với điều khoản sử dụng để hoàn tất thanh toán.');
+    //         return;
+    //     }
+    //
+    //     setIsLoading(true);
+    //     try {
+    //         const storedUser = localStorage.getItem('userId');
+    //         const currentUserId = storedUser ? Number(storedUser) : null; // Chuyển thẳng từ String sang Number
+    //         // Prepare payload containing the LIST OF ROOMS for the Backend
+    //         const payload = {
+    //             customerName: form.customerName,
+    //             phone: form.phone,
+    //             email: form.email,
+    //             nationality: form.nationality,
+    //             specialRequests: `Giờ dự kiến: ${form.checkInTimeWindow}. Ghi chú: ${form.note}`,
+    //             paymentMethod: form.paymentMethod,
+    //             promoCode: form.promoCode,
+    //             userId: currentUserId,
+    //             // Map the items to the structure expected by the backend DTO
+    //             rooms: checkoutItems.map(item => ({
+    //                 roomTypeId: item.roomTypeId,
+    //                 checkIn: item.checkIn.split('T')[0], // Extract YYYY-MM-DD
+    //                 checkOut: item.checkOut.split('T')[0],
+    //                 quantity: item.quantity
+    //             }))
+    //         };
+    //
+    //
+    //
+    //         // If checking out from the cart, clear the local cart data
+    //         if (location.state?.isFromCart) {
+    //             localStorage.removeItem('hotel_cart');
+    //         }
+    //         const responseData = await bookingService.submitPayment(payload);
+    //         if (form.paymentMethod === 'Ví Điện Tử' || form.paymentMethod === 'Thẻ Quốc Tế') {
+    //             // Gọi API thứ 2 để lấy link VNPay
+    //             const vnpayUrl = await bookingService.getVNPayUrl(responseData.id, totalPrice);
+    //
+    //             // Chuyển hướng trình duyệt sang VNPay
+    //             window.location.href = vnpayUrl;
+    //             return;
+    //         }
+    //
+    //
+    //         alert('Đặt phòng thành công!');
+    //         navigate('/success', { state: { bookingData: responseData } });
+    //     } catch (err: any) {
+    //         alert(err.message || 'Giao dịch thất bại, vui lòng thử lại.');
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
+
+
     const handleFinalSubmit = async () => {
         if (!form.customerName || !form.phone || !form.email) {
             alert('Vui lòng điền đầy đủ thông tin khách hàng bắt buộc.');
@@ -96,10 +156,10 @@ export const usePayment = () => {
 
         setIsLoading(true);
         try {
-            const storedUser = localStorage.getItem('user');
-            const currentUser = storedUser ? JSON.parse(storedUser) : null;
-            const currentUserId = currentUser ? currentUser.id : null;
-            // Prepare payload containing the LIST OF ROOMS for the Backend
+                     const storedUser = localStorage.getItem('userId');
+                     const currentUserId = storedUser ? Number(storedUser) : null;
+
+            // Tạo payload
             const payload = {
                 customerName: form.customerName,
                 phone: form.phone,
@@ -109,25 +169,49 @@ export const usePayment = () => {
                 paymentMethod: form.paymentMethod,
                 promoCode: form.promoCode,
                 userId: currentUserId,
-                // Map the items to the structure expected by the backend DTO
                 rooms: checkoutItems.map(item => ({
                     roomTypeId: item.roomTypeId,
-                    checkIn: item.checkIn.split('T')[0], // Extract YYYY-MM-DD
+                    checkIn: item.checkIn.split('T')[0],
                     checkOut: item.checkOut.split('T')[0],
                     quantity: item.quantity
                 }))
             };
 
-            await bookingService.submitPayment(payload);
+            // 1. GỌI API LƯU BOOKING (Chỉ gọi 1 lần duy nhất)
+            const responseData = await bookingService.submitPayment(payload);
 
-            // If checking out from the cart, clear the local cart data
+            // Xóa giỏ hàng nếu cần
             if (location.state?.isFromCart) {
                 localStorage.removeItem('hotel_cart');
             }
-            const responseData = await bookingService.submitPayment(payload);
+
+            // 2. LẤY ID CỦA ĐƠN HÀNG VỪA TẠO
+            console.log("Dữ liệu Booking Backend trả về:", responseData);
+            // Đề phòng Backend trả về trường tên là 'bookingId' thay vì 'id'
+            const finalBookingId = responseData.id || responseData.bookingId;
+
+            if (!finalBookingId) {
+                throw new Error("Không lấy được mã đơn hàng từ hệ thống. Vui lòng kiểm tra lại Backend!");
+            }
+
+            // 3. NẾU LÀ VNPAY THÌ ĐÁ SANG TRANG THANH TOÁN
+            if (form.paymentMethod === 'Ví Điện Tử' || form.paymentMethod === 'Thẻ Quốc Tế') {
+                const vnpayUrl = await bookingService.getVNPayUrl(finalBookingId, totalPrice);
+
+                if (vnpayUrl) {
+                    window.location.href = vnpayUrl;
+                } else {
+                    alert("Lỗi: Không nhận được đường dẫn thanh toán từ VNPay!");
+                }
+                return; // Dừng lại ở đây để nó tự chuyển trang
+            }
+
+            // 4. NẾU THANH TOÁN TẠI QUẦY THÌ QUA TRANG SUCCESS LUN
             alert('Đặt phòng thành công!');
             navigate('/success', { state: { bookingData: responseData } });
+
         } catch (err: any) {
+            console.error("Lỗi khi submit:", err);
             alert(err.message || 'Giao dịch thất bại, vui lòng thử lại.');
         } finally {
             setIsLoading(false);

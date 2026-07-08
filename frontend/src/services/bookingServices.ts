@@ -34,7 +34,28 @@ export const bookingService = {
             return originalPrice * 0.1;
         }
         throw new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+    },
+    getVNPayUrl: async (bookingId: number | string, amount: number) => {
+        try {
+            // Gọi API GET kèm tham số trên URL
+            const response = await axios.get(`http://localhost:8080/api/payment/create-vnpay-url`, {
+                params: {
+                    bookingId: bookingId,
+                    amount: amount
+                }
+            });
+
+            // Backend của mình đang trả về chuỗi JSON: { "url": "https://..." }
+            // Nên ở đây mình phải chấm tới .url để lấy ra đúng đường link
+            return response.data.url;
+        } catch (error) {
+            console.error("Lỗi khi lấy link VNPay:", error);
+            throw new Error("Không thể tạo kết nối thanh toán VNPay");
+        }
     }
+
+
+
 };
 
 

@@ -3,6 +3,7 @@ package project.backend.controllers;
 
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import project.backend.dto.BookingRequest;
 import project.backend.entities.Booking;
 import project.backend.services.BookingService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -58,6 +60,8 @@ public class BookingController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+
 
 }
 

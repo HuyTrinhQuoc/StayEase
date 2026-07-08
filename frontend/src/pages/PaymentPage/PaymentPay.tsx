@@ -7,7 +7,7 @@ import { BookingSummary } from "../../components/PaymentComponent/BookingSummary
 
 const PaymentPage = () => {
     const {
-        checkoutItems, // Thay đổi ở đây: Dùng checkoutItems thay cho bookingDetails
+        checkoutItems,
         form,
         vatFee,
         serviceFee,

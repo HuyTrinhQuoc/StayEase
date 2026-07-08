@@ -15,6 +15,7 @@ import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.t
 import RegisterPage from "../pages/RegisterPage/RegisterPage.tsx";
 import CartPage from "../pages/CartPage/CartPage.tsx";
 import {AdminChat} from "../components/ChatAdminComponent/AdminChat.tsx";
+import VNPayReturn from "../components/VnPayReturnComponent/VNPayReturn.tsx";
 
 
 
@@ -29,6 +30,7 @@ export default function AppRoutes() {
                 <Route path="/payment" element={<PaymentPage/>}/>
                 <Route path="/success" element={<SuccessPage/>}/>
                 <Route path="/history" element={<HistoryPage/>}/>
+                <Route path="/vnpay-return" element={<VNPayReturn />} />
             </Route>
 
             {/*chứa header side chung của admin*/}
