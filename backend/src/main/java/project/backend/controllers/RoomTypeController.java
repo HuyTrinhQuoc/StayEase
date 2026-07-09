@@ -1,5 +1,6 @@
 package project.backend.controllers;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,18 +32,17 @@ public class RoomTypeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ==================== CÁC API PHỤC VỤ QUẢN TRỊ ADMIN (CATALOG MANAGEMENT) ====================
 
     // API 3: Thêm mới một hạng phòng / loại phòng (Bấm nút Thêm mới ngoài Giao diện)
     @PostMapping("/admin/create")
-    public ResponseEntity<RoomType> createRoomType(@RequestBody RoomType roomType) {
+    public ResponseEntity<RoomType> createRoomType(@Valid  @RequestBody RoomType roomType) {
         RoomType created = catalogService.saveOrUpdateCatalog(roomType);
         return ResponseEntity.ok(created);
     }
 
     // API 4: Chỉnh sửa / Cập nhật hạng phòng theo ID (Bấm nút Lưu thay đổi khi Sửa)
     @PutMapping("/admin/update/{id}")
-    public ResponseEntity<RoomType> updateRoomType(@PathVariable Integer id, @RequestBody RoomType details) {
+    public ResponseEntity<RoomType> updateRoomType(@PathVariable Integer id, @Valid @RequestBody RoomType details) {
         return catalogService.getCatalogById(id)
                 .map(existing -> {
                     // Cập nhật các thông tin cơ bản

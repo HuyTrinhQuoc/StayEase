@@ -19,7 +19,12 @@ public class BookingRequestDTO {
     private String email;
 
     private String nationality;
+
+    @NotNull(message = "Ngày check-in không được để trống")
+    @FutureOrPresent(message = "Ngày check-in phải từ ngày hiện tại")
     private LocalDate checkIn;
+
+    @NotNull(message = "Ngày check-out không được để trống")
     private LocalDate checkOut;
     private String checkInTimeWindow;
     private String note;

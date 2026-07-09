@@ -4,6 +4,7 @@ package project.backend.controllers;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class BookingController {
      * Endpoint: http://localhost:8080/api/bookings/payment
      */
     @PostMapping("/payment")
-    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
+    public ResponseEntity<?> createBooking(@Valid  @RequestBody BookingRequest request) {
         try {
             // 1. Chuyển toàn bộ dữ liệu (thông tin khách + danh sách phòng) sang Service xử lý
             var newBooking = bookingService.handleCreateBooking(request);
@@ -40,9 +41,6 @@ public class BookingController {
             return ResponseEntity.ok(newBooking);
 
         } catch (Exception e) {
-            // 3. Bắt lỗi (Ví dụ: ID phòng không tồn tại, tính toán sai, lỗi database...)
-            // Trả về HTTP 400 (Bad Request) kèm theo câu thông báo lỗi
-            // Câu thông báo này sẽ được thằng catch (error) bên React Axios bắt lấy và hiển thị alert
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

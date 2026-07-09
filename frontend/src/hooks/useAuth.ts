@@ -20,7 +20,7 @@ export const useLogin = () => {
                 token: data.token,
                 userId: data.id,
                 userName: data.name,
-                // role: data.role // Nếu API login trả về
+
             }));
 
             return data;

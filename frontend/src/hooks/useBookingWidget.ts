@@ -106,7 +106,7 @@ export const useBookingWidget = (
             return;
         }
 
-        // Đã xóa cách tính toán totalNights và totalPrice ở đây vì trang Payment sẽ tự tính
+
 
         navigate('/payment', {
             state: {
@@ -123,7 +123,7 @@ export const useBookingWidget = (
         });
     };
 
-    // QUAN TRỌNG: TRẢ VỀ CÁC HÀM VÀ BIẾN ĐỂ COMPONENT BÊN NGOÀI SỬ DỤNG
+
     return {
         checkIn, setCheckIn,
         checkOut, setCheckOut,
